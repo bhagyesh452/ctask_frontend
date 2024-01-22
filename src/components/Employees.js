@@ -38,19 +38,59 @@ function Employees({ onEyeButtonClick }) {
   };
   const [itemIdToDelete, setItemIdToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [companyDdata, setCompanyDdata] = useState([]);
+  const [nametodelete, setnametodelete] = useState("");
 
-  const handleDeleteClick = (itemId) => {
+  const handleDeleteClick = (itemId, nametochange) => {
     // Open the confirm delete modal
+    setCompanyDdata(cdata.filter((item) => item.ename === nametochange));
     setItemIdToDelete(itemId);
     setIsModalOpen(true);
   };
+
+
 
   const handleConfirmDelete = () => {
     // Perform the delete operation here (call your delete API, etc.)
     // After deletion, close the modal
     handleDelete(itemIdToDelete);
+    handledeletefromcompany();
     setIsModalOpen(false);
   };
+
+  const handledeletefromcompany = async()=>{
+
+    if (companyDdata && companyDdata.length !== 0) {
+      // Assuming ename is part of dataToSend
+  
+      try {
+        // Update companyData in the second database
+        await Promise.all(
+          companyDdata.map(async (item) => {
+            await axios.delete(
+              `http://localhost:3001/newcompanynamedelete/${item._id}`,
+            );
+            console.log(`Deleted name for ${item._id}`);
+          })
+        );
+  
+        console.log("All ename updates completed successfully");
+      } catch (error) {
+        console.error("Error updating enames:", error.message);
+        // Handle the error as needed
+      }
+    }
+  
+    Swal.fire({
+      title: "Data Deleted!",
+      text: "You have successfully Deleted the data!",
+      icon: "success",
+    });
+
+  }
+
+ 
+
   const handleCancelDelete = () => {
     // Cancel the delete operation and close the modal
     setIsModalOpen(false);
@@ -201,14 +241,11 @@ function Employees({ onEyeButtonClick }) {
           `http://localhost:3001/einfo/${selectedDataId}`,
           dataToSend
         );
-        
 
         if (companyData && companyData.length !== 0) {
           // Assuming ename is part of dataToSend
           const { ename } = dataToSend;
           try {
-         
-
             // Update companyData in the second database
             await Promise.all(
               companyData.map(async (item) => {
@@ -219,14 +256,14 @@ function Employees({ onEyeButtonClick }) {
                 console.log(`Updated ename for ${item._id}`);
               })
             );
-        
-            console.log('All ename updates completed successfully');
+
+            console.log("All ename updates completed successfully");
           } catch (error) {
-            console.error('Error updating enames:', error.message);
+            console.error("Error updating enames:", error.message);
             // Handle the error as needed
           }
         }
-        
+
         Swal.fire({
           title: "Data Updated!",
           text: "You have successfully updated the data!",
@@ -263,7 +300,7 @@ function Employees({ onEyeButtonClick }) {
   const closepopup = () => {
     openchange(false);
   };
-console.log(companyData);
+  console.log(companyData);
   //   cInfo:{
   //     "Company Name": referenceId + "company",
 
@@ -625,7 +662,9 @@ console.log(companyData);
                           >
                             <div className="icons-btn">
                               <IconTrash
-                                onClick={() => handleDeleteClick(item._id)}
+                                onClick={() =>
+                                  handleDeleteClick(item._id, item.ename)
+                                }
                               />
                             </div>
 
