@@ -3,9 +3,10 @@ import axios from "axios";
 import Navbar from "./Navbar";
 import Header from "./Header";
 import { useParams } from "react-router-dom";
-import { IconChevronLeft } from "@tabler/icons-react";
+import { IconBoxPadding, IconChevronLeft } from "@tabler/icons-react";
 import { IconButton } from "@mui/material";
 import { Link } from 'react-router-dom';
+import "./styles/table.css";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 
@@ -79,19 +80,22 @@ console.log(employeeData);
         <div className="page-header d-print-none">
           <div className="container-xl">
             <div className="row g-2 align-items-center">
-              <div className="col">
+              
+              <div  className="col d-flex">
                 {/* <!-- Page pre-title --> */}
-                <h2 className="page-title">Employee/{employeeName}</h2>
+                <Link to={`/employees`}>
+                    <IconButton>
+                      <IconChevronLeft />
+                    </IconButton>
+                  </Link>
+                
+                <h2 className="page-title">Employee  {">" + employeeName}</h2>
               </div>
 
               {/* <!-- Page title actions --> */}
               <div className="col-auto ms-auto d-print-none">
                 <div className="btn-list">
-                  <Link to={`/employees`}>
-                    <IconButton>
-                      <IconChevronLeft />
-                    </IconButton>
-                  </Link>
+                  
 
                   <a
                     href="#"
@@ -112,14 +116,14 @@ console.log(employeeData);
         }} className="page-body">
         <div className="container-xl">
           <div className="card">
-            <div className="card-body">
+            <div className="card-body p-0">
               <div id="table-default" className="table-responsive">
-                <table className="table">
+                <table className="table table-vcenter table-nowrap">
                   <thead>
                     <tr>
                       
                       <th>
-                        <button className="table-sort" data-sort="sort-name">
+                        <button className="table-sort" data-sort="sort-name pad">
                           Sr.No
                         </button>
                       </th>
@@ -153,33 +157,51 @@ console.log(employeeData);
                           State
                         </button>
                       </th>
+                      <th>
+                        <button className="table-sort" data-sort="sort-date">
+                          Status
+                        </button>
+                      </th>
+                      <th>
+                        <button  className="table-sort" data-sort="sort-date">
+                          Remarks
+                        </button>
+                      </th>
                       
                     </tr>
                   </thead>
                   {employeeData.length == 0 ? (
-                    <div>No data available</div>
+                    <tbody>
+                    <tr>
+                      <td colSpan="10" style={{ textAlign: "center" }}>
+                        No data available
+                      </td>
+                    </tr>
+                  </tbody>
                   ) : (
                     employeeData.map((company, index) => (
-                      <tbody className="table-tbody">
-                        <tr>
+                      <tbody>
+                        <tr style={{padding:"10px"}}>
                           
-                          <td className="sort-name">
+                          <td className="sort-name pad">
                             {index+1}
                           </td>
-                          <td className="sort-name">
+                          <td className="sort-name pad">
                             {company["Company Name"]}
                           </td>
-                          <td className="sort-name">
+                          <td className="sort-name pad">
                             {company["Company Number"]}
                           </td>
-                          <td className="sort-name">
+                          <td className="sort-name pad">
                             {company["Company Email"]}
                           </td>
-                          <td className="sort-name">
+                          <td className="sort-name pad">
                             {company["Company Incorporation Date  "]}
                           </td>
-                          <td className="sort-name">{company["City"]}</td>
-                          <td className="sort-name">{company["State"]}</td>
+                          <td className="sort-name pad">{company["City"]}</td>
+                          <td className="sort-name pad">{company["State"]}</td>
+                          <td className="sort-name pad">{company["Status"]}</td>
+                          <td className="sort-name pad">{company["Remarks"]}</td>
                          
                         </tr>
                       </tbody>

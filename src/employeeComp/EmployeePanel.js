@@ -6,9 +6,14 @@ import axios from "axios";
 import { IconChevronLeft } from "@tabler/icons-react";
 import { IconChevronRight } from "@tabler/icons-react";
 import { IconButton } from "@mui/material";
+import "./panel.css";
 import { Link } from "react-router-dom";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+
+import CloseIcon from "@mui/icons-material/Close";
 
 function EmployeePanel() {
+  const [open, openchange] = useState(false);
   const [data, setData] = useState([]);
   const [employeeData, setEmployeeData] = useState([]);
   const [searchText, setSearchText] = useState("");
@@ -27,6 +32,13 @@ function EmployeePanel() {
   const endIndex = startIndex + itemsPerPage;
   const { userId } = useParams();
   console.log(userId);
+
+  const functionopenpopup = () => {
+    openchange(true);
+  };
+  const closepopup = () => {
+    openchange(false);
+  };
 
   const fetchData = async () => {
     try {
@@ -152,36 +164,34 @@ function EmployeePanel() {
     }
   });
 
+  const currentData = filteredData.slice(startIndex, endIndex);
+
   const handleStatusChange = async (employeeId, newStatus) => {
     console.log(employeeId, newStatus);
-    
-      try {
-        // Make an API call to update the employee status in the database
-        const response = await axios.post(
-          `http://localhost:3001/update-status/${employeeId}`,
-          {
-            newStatus,
-          }
-        );
-  
-        // Check if the API call was successful
-        if (response.status === 200) {
-          // If successful, update the employeeData state or fetch data again to reflect changes
-          fetchData(); // Assuming fetchData is a function to fetch updated employee data
-  
-          
-          window.location.reload();
-        } else {
-          // Handle the case where the API call was not successful
-          console.error("Failed to update status:", response.data.message);
-        }
-      } catch (error) {
-        // Handle any errors that occur during the API call
-        console.error("Error updating status:", error.message);
-      }
 
-    
-    
+    try {
+      // Make an API call to update the employee status in the database
+      const response = await axios.post(
+        `http://localhost:3001/update-status/${employeeId}`,
+        {
+          newStatus,
+        }
+      );
+
+      // Check if the API call was successful
+      if (response.status === 200) {
+        // If successful, update the employeeData state or fetch data again to reflect changes
+        fetchData(); // Assuming fetchData is a function to fetch updated employee data
+
+        window.location.reload();
+      } else {
+        // Handle the case where the API call was not successful
+        console.error("Failed to update status:", response.data.message);
+      }
+    } catch (error) {
+      // Handle any errors that occur during the API call
+      console.error("Error updating status:", error.message);
+    }
   };
 
   const handlenewFieldChange = (companyId, field, value) => {
@@ -204,204 +214,438 @@ function EmployeePanel() {
 
     // Now you have the updated Status and Remarks, perform the update logic
     console.log(Remarks);
-    
-    
-      try {
-        // Make an API call to update the employee status in the database
-        const response = await axios.post(
-          `http://localhost:3001/update-remarks/${companyId}`,
-          {
-            Remarks,
-          }
-        );
 
-        // Check if the API call was successful
-        if (response.status === 200) {
-          // If successful, update the employeeData state or fetch data again to reflect changes
-          fetchData(); // Assuming fetchData is a function to fetch updated employee data
-
-          
-          window.location.reload();
-        } else {
-          // Handle the case where the API call was not successful
-          console.error("Failed to update status:", response.data.message);
+    try {
+      // Make an API call to update the employee status in the database
+      const response = await axios.post(
+        `http://localhost:3001/update-remarks/${companyId}`,
+        {
+          Remarks,
         }
-      } catch (error) {
-        // Handle any errors that occur during the API call
-        console.error("Error updating status:", error.message);
-      }
+      );
 
-      setUpdateData((prevData) => ({
-        ...prevData,
-        [companyId]: {
-          ...prevData[companyId],
-          isButtonEnabled: false,
-        },
-      }));
-    
+      // Check if the API call was successful
+      if (response.status === 200) {
+        // If successful, update the employeeData state or fetch data again to reflect changes
+        fetchData(); // Assuming fetchData is a function to fetch updated employee data
+
+        window.location.reload();
+      } else {
+        // Handle the case where the API call was not successful
+        console.error("Failed to update status:", response.data.message);
+      }
+    } catch (error) {
+      // Handle any errors that occur during the API call
+      console.error("Error updating status:", error.message);
+    }
+
+    setUpdateData((prevData) => ({
+      ...prevData,
+      [companyId]: {
+        ...prevData[companyId],
+        isButtonEnabled: false,
+      },
+    }));
 
     // After updating, you can disable the button
   };
 
+  const [freezeIndex, setFreezeIndex] = useState(null);
+
+  const handleFreezeIndexChange = (e) => {
+    setFreezeIndex(Number(e.target.value));
+  };
+
+  const getCellStyle = (index) => {
+    if (index === freezeIndex) {
+      return {
+        position: "sticky",
+        left: 0,
+        zIndex: 1,
+        backgroundColor: "#f0f0f0",
+      };
+    }
+
+    return {};
+  };
+
+  function formatDate(inputDate) {
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    const formattedDate = new Date(inputDate).toLocaleDateString(
+      "en-US",
+      options
+    );
+    return formattedDate;
+  }
+
+  // Request form for Employees
+
+  const [selectedYear, setSelectedYear] = useState("");
+  const [companyType, setCompanyType] = useState("");
+  const [numberOfData, setNumberOfData] = useState("");
+
+  const handleYearChange = (event) => {
+    setSelectedYear(event.target.value);
+  };
+
+  const handleCompanyTypeChange = (event) => {
+    setCompanyType(event.target.value);
+  };
+
+  const handleNumberOfDataChange = (event) => {
+    setNumberOfData(event.target.value);
+  };
+
+  const handleSubmit = async (event) => {
+    const name = data.ename;
+    event.preventDefault();
+    if(selectedOption==="notgeneral"){
+      try {
+        // Make API call using Axios
+        const response = await axios.post(
+          "http://localhost:3001/api/requestData",
+          {
+            selectedYear,
+            companyType,
+            numberOfData,
+            name,
+          }
+        );
+  
+        console.log("Data sent successfully:", response.data);
+        alert("Request sent!");
+        closepopup();
+      } catch (error) {
+        console.error("Error:", error.message);
+        alert("Please try again later!");
+      }
+
+    }
+    else{
+      try {
+        // Make API call using Axios
+        const response = await axios.post(
+          "http://localhost:3001/api/requestgData",
+          {
+            numberOfData,
+            name,
+          }
+        );
+  
+        console.log("Data sent successfully:", response.data);
+        alert("Request sent!");
+        closepopup();
+      } catch (error) {
+        console.error("Error:", error.message);
+        alert("Please try again later!");
+      }
+    }
+  };
+
+  const [selectedOption, setSelectedOption] = useState("direct");
+
+  const handleOptionChange = (event) => {
+    setSelectedOption(event.target.value);
+  };
+
   return (
     <div>
-      <Header name={data.ename} />
+      <Header name={data.ename} designation={data.designation} />
       <EmpNav />
+
+      {/* Dialog box for Request Data */}
+
+      <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Request Data{" "}
+          <IconButton onClick={closepopup} style={{ float: "right" }}>
+            <CloseIcon color="primary"></CloseIcon>
+          </IconButton>{" "}
+        </DialogTitle>
+        <DialogContent>
+          <div className="form-control">
+          <form onSubmit={handleSubmit} style={{ textAlign: "center", maxWidth: "400px", margin: "auto" }}>
+          <div className="con2 d-flex">
+                  <div
+                    style={{ margin: "10px 10px 0px 0px" }}
+                    className="direct form-control"
+                  >
+                    <input
+                      type="radio"
+                      id="general"
+                      value="general"
+                      checked={selectedOption === "general"}
+                      onChange={handleOptionChange}
+                    />
+                    <label htmlFor="general">General Data</label>
+                  </div>
+                  <div
+                    style={{ margin: "10px 0px 0px 10px" }}
+                    className="indirect form-control"
+                  >
+                    <input
+                      type="radio"
+                      id="notgeneral"
+                      value="notgeneral"
+                      checked={selectedOption === "notgeneral"}
+                      onChange={handleOptionChange}
+                    />
+                    <label htmlFor="notgeneral">Manual Data</label>
+                  </div>
+                </div>
+      {selectedOption === "notgeneral" ? (
+        <>
+  <div style={{ marginBottom: "15px" }}>
+    <label htmlFor="selectYear">Select Year :</label>
+    <select
+      id="selectYear"
+      name="selectYear"
+      value={selectedYear}
+      onChange={handleYearChange}
+      style={{ padding: "8px" }}
+    >
+      {[...Array(2025 - 1970).keys()].map((year) => (
+        <option key={year} value={1970 + year}>
+          {1970 + year}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <div style={{ marginBottom: "15px" }}>
+    <label>Company Type :</label>
+    <input
+      type="radio"
+      id="llp"
+      name="companyType"
+      value="LLP"
+      checked={companyType === "LLP"}
+      onChange={handleCompanyTypeChange}
+      style={{ marginRight: "5px" }}
+    />
+    <label htmlFor="llp" style={{ marginRight: "15px" }}>LLP</label>
+    <input
+      type="radio"
+      id="pvtLtd"
+      name="companyType"
+      value="PVT LTD"
+      checked={companyType === "PVT LTD"}
+      onChange={handleCompanyTypeChange}
+      style={{ marginRight: "5px" }}
+    />
+    <label htmlFor="pvtLtd">PVT LTD</label>
+  </div>
+        </>
+      ): (
+        <div>
+
+        </div>
+
+      )}
+  
+
+  <div style={{ marginBottom: "15px" }}>
+    <label htmlFor="numberOfData">Number of Data :</label>
+    <input
+      type="number"
+      id="numberOfData"
+      name="numberOfData"
+      value={numberOfData}
+      onChange={handleNumberOfDataChange}
+      min="1"
+      required
+      style={{ padding: "8px" }}
+    />
+  </div>
+
+  <button type="submit" style={{ padding: "10px 20px", background: "#4CAF50", color: "white", border: "none" }}>Submit</button>
+</form>
+
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main Page Starts from here */}
       <div className="page-wrapper">
         <div className="page-header d-print-none">
           <div className="container-xl">
             <div className="row g-2 align-items-center">
               <div className="col">
                 {/* <!-- Page pre-title --> */}
-                <h2 className="page-title">Welcome, {data.ename}</h2>
+                <h2 className="page-title">{data.ename}</h2>
               </div>
               <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-
-                  alignItems: "center",
-                }}
-                className="feature1"
+                style={{ display: "flex", justifyContent: "space-between" }}
+                className="features"
               >
-                <div style={{ margin: "20px 0px" }} className="filter">
-                  <div style={{ display: "flex" }} className="mb-0">
-                    <div className="form-control">
-                      <select
-                        style={{ border: "none", outline: "none" }}
-                        value={selectedField}
-                        onChange={handleFieldChange}
-                      >
-                        <option value="Company Name">Company Name</option>
-                        <option value="Company Number">Company Number</option>
-                        <option value="Company Email">Company Email</option>
-                        <option value="Company Incorporation Date  ">
-                          Company Incorporation Date
-                        </option>
-                        <option value="City">City</option>
-                        <option value="State">State</option>
-                        <option value="Status">Status</option>
-                      </select>
-                      {/* <Select value={selectedField} onChange={handleFieldChange}>
-                      <MenuItem value="Company Name">Company Name</MenuItem>
-                      <MenuItem value="Company Number">Company Number</MenuItem>
-                      <MenuItem value="Company Email">Company Email</MenuItem>
-                      <MenuItem value="Company Incorporation Date  ">Company Incorporation Date</MenuItem>
-                      <MenuItem value="City">City</MenuItem>
-                      <MenuItem value="State">State</MenuItem>
-                    
-                    </Select> */}
-                    </div>
-
-                    <input
-                      onChange={handleDateChange}
-                      style={{ display: visibility }}
-                      type="date"
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-
-                <div
-                  style={{ margin: "0px 10px", display: visibilityOther }}
-                  className="searchbar"
-                >
-                  <div style={{ width: "20vw" }} className="input-icon">
-                    <span className="input-icon-addon">
-                      {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="icon"
-                        width="20"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        fill="none"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                        <path d="M21 21l-6 -6" />
-                      </svg>
-                    </span>
-                    <input
-                      type="text"
-                      value={searchText}
-                      onChange={(e) => {
-                        setSearchText(e.target.value);
-                        setCurrentPage(0);
-                      }}
-                      className="form-control"
-                      placeholder="Search…"
-                      aria-label="Search in website"
-                    />
-                  </div>
-                </div>
-                <div
-                  style={{ margin: "0px 10px", display: visibilityOthernew }}
-                  className="searchbar"
-                >
-                  <div style={{ width: "20vw" }} className="input-icon">
+                <div style={{ display: "flex" }} className="feature1">
+                  <div
+                    className="form-control"
+                    style={{ height: "fit-content", width: "15vw" }}
+                  >
                     <select
-                      className="form-control"
-                      value={searchText}
-                      onChange={(e) => {
-                        setSearchText(e.target.value);
+                      style={{
+                        border: "none",
+                        outline: "none",
+                        width: "fit-content",
                       }}
+                      value={selectedField}
+                      onChange={handleFieldChange}
                     >
-                      <option value="All">All </option>
-                      <option value="Busy ">Busy </option>
-                      <option value="Not Picked Up ">Not Picked Up </option>
-                      <option value="Junk">Junk</option>
-                      <option value="Interested">Interested</option>
-                      <option value="Not Interested">Not Interested</option>
+                      <option value="Company Name">Company Name</option>
+                      <option value="Company Number">Company Number</option>
+                      <option value="Company Email">Company Email</option>
+                      <option value="Company Incorporation Date  ">
+                        Company Incorporation Date
+                      </option>
+                      <option value="City">City</option>
+                      <option value="State">State</option>
+                      <option value="Status">Status</option>
                     </select>
                   </div>
-                </div>
-              </div>
-              <div className="subfilter">
-                {selectedField === "State" && (
-                  <div style={{ width: "15vw" }} className="input-icon">
-                    <hr style={{ margin: "10px" }} />
-                    <span className="input-icon-addon">
-                      {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="icon"
-                        width="20"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        stroke-width="2"
-                        stroke="currentColor"
-                        fill="none"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                        <path d="M21 21l-6 -6" />
-                      </svg>
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={citySearch}
-                      onChange={(e) => {
-                        setcitySearch(e.target.value);
-                        setCurrentPage(0);
+                  {visibility === "block" ? (
+                    <div>
+                      <input
+                        onChange={handleDateChange}
+                        style={{ display: visibility }}
+                        type="date"
+                        className="form-control"
+                      />
+                    </div>
+                  ) : (
+                    <div></div>
+                  )}
+
+                  {visibilityOther === "block" ? (
+                    <div
+                      style={{
+                        width: "20vw",
+                        margin: "0px 10px",
+                        display: visibilityOther,
                       }}
-                      placeholder="Search City"
-                      aria-label="Search in website"
-                    />
-                  </div>
-                )}
-                {selectedField === "Company Incorporation Date  " && (
-                  <div style={{ width: "fit-content" }} className="form-control">
-                  
-                    <div  className="mb-0">
-                      <div className="form-control">
+                      className="input-icon"
+                    >
+                      <span className="input-icon-addon">
+                        {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="icon"
+                          width="20"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          stroke-width="2"
+                          stroke="currentColor"
+                          fill="none"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                          <path d="M21 21l-6 -6" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        value={searchText}
+                        onChange={(e) => {
+                          setSearchText(e.target.value);
+                          setCurrentPage(0);
+                        }}
+                        className="form-control"
+                        placeholder="Search…"
+                        aria-label="Search in website"
+                      />
+                    </div>
+                  ) : (
+                    <div></div>
+                  )}
+                  {visibilityOthernew === "block" ? (
+                    <div
+                      style={{
+                        width: "20vw",
+                        margin: "0px 10px",
+                        display: visibilityOthernew,
+                      }}
+                      className="input-icon form-control"
+                    >
+                      <select
+                        value={searchText}
+                        onChange={(e) => {
+                          setSearchText(e.target.value);
+                        }}
+                      >
+                        <option value="All">All </option>
+                        <option value="Busy ">Busy </option>
+                        <option value="Not Picked Up ">Not Picked Up </option>
+                        <option value="Junk">Junk</option>
+                        <option value="Interested">Interested</option>
+                        <option value="Not Interested">Not Interested</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div></div>
+                  )}
+                  {searchText !== "" ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        fontSize: "16px",
+                        fontFamily: "sans-serif",
+                      }}
+                      className="results"
+                    >
+                      {filteredData.length} results found
+                    </div>
+                  ) : (
+                    <div></div>
+                  )}
+                </div>
+                <div
+                  style={{ display: "flex", alignItems: "center" }}
+                  className="feature2"
+                >
+                  {selectedField === "State" && (
+                    <div style={{ width: "15vw" }} className="input-icon">
+                      <span className="input-icon-addon">
+                        {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="icon"
+                          width="20"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          stroke-width="2"
+                          stroke="currentColor"
+                          fill="none"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                          <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                          <path d="M21 21l-6 -6" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={citySearch}
+                        onChange={(e) => {
+                          setcitySearch(e.target.value);
+                          setCurrentPage(0);
+                        }}
+                        placeholder="Search City"
+                        aria-label="Search in website"
+                      />
+                    </div>
+                  )}
+                  {selectedField === "Company Incorporation Date  " && (
+                    <>
+                      <div
+                        style={{ width: "fit-content" }}
+                        className="form-control"
+                      >
                         <select
                           style={{ border: "none", outline: "none" }}
                           onChange={(e) => {
@@ -426,65 +670,44 @@ function EmployeePanel() {
                           <option value="1">January</option>
                         </select>
                       </div>
-                      <div className="form-control">
-                        <div
-                          style={{ width: "fit-content" }}
-                          className="input-icon"
-                        >
-                          <span className="input-icon-addon">
-                            {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="icon"
-                              width="20"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              stroke-width="2"
-                              stroke="currentColor"
-                              fill="none"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
-                              <path
-                                stroke="none"
-                                d="M0 0h24v24H0z"
-                                fill="none"
-                              />
-                              <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                              <path d="M21 21l-6 -6" />
-                            </svg>
-                          </span>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={year}
-                            onChange={(e) => {
-                              setYear(e.target.value);
-                            }}
-                            placeholder="Search by Year"
-                            aria-label="Search in website"
-                          />
-                        </div>
+                      <div className="input-icon">
+                        <input
+                          type="number"
+                          value={year}
+                          defaultValue="Select Year"
+                          className="form-control"
+                          placeholder="Select Year.."
+                          onChange={(e) => {
+                            setYear(e.target.value);
+                          }}
+                          aria-label="Search in website"
+                        />
                       </div>
+                    </>
+                  )}
+                  <div className="request">
+                    <div className="btn-list">
+                      <button
+                        onClick={functionopenpopup}
+                        className="btn btn-primary d-none d-sm-inline-block"
+                      >
+                        Request Data
+                      </button>
+                      <a
+                        href="#"
+                        className="btn btn-primary d-sm-none btn-icon"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modal-report"
+                        aria-label="Create new report"
+                      >
+                        {/* <!-- Download SVG icon from http://tabler-icons.io/i/plus --> */}
+                      </a>
                     </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* <!-- Page title actions --> */}
-              <div className="col-auto ms-auto d-print-none">
-                <div className="btn-list">
-                  <a
-                    href="#"
-                    className="btn btn-primary d-sm-none btn-icon"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modal-report"
-                    aria-label="Create new report"
-                  >
-                    {/* <!-- Download SVG icon from http://tabler-icons.io/i/plus --> */}
-                  </a>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -496,104 +719,103 @@ function EmployeePanel() {
         >
           <div className="container-xl">
             <div className="card">
-              <div className="card-body">
-                <div style={{overflowY : "auto"}} id="table-default" className="table-responsive">
-                  <table style={{width:"100%"}} className="table">
+              <div className="card-body p-0">
+                <div style={{ overflowX: "auto" }}>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      border: "1px solid #ddd",
+                    }}
+                    className="table-vcenter table-nowrap"
+                  >
                     <thead>
-                      <tr>
-                        <th>
-                          <button className="table-sort" data-sort="sort-name">
-                            Sr.No
-                          </button>
+                      <tr style={{ backgroundColor: "#f2f2f2" }}>
+                        <th
+                          style={{ position: "sticky", left: "0px", zIndex: 1 }}
+                        >
+                          Sr.No
                         </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-city">
-                            Company Name
-                          </button>
+                        <th
+                          style={{
+                            position: "sticky",
+                            left: "80px",
+                            zIndex: 1,
+                          }}
+                        >
+                          Company Name
                         </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-type">
-                            Company Number
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-score">
-                            Company Email
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-date">
-                            Company Incorporation Date
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-date">
-                            City
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-date">
-                            State
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-date">
-                            Status
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-date">
-                            Remarks
-                          </button>
-                        </th>
-                        <th>
-                          <button className="table-sort" data-sort="sort-date">
-                            Action
-                          </button>
-                        </th>
+                        <th>Company Number</th>
+                        <th>Company Email</th>
+                        <th>Incorporation Date</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
-                    {filteredData.length == 0 ? (
-                      <div>No data available</div>
+                    {currentData.length === 0 ? (
+                      <tbody>
+                        <tr>
+                          <td colSpan="10" style={{ textAlign: "center" }}>
+                            No data available
+                          </td>
+                        </tr>
+                      </tbody>
                     ) : (
-                      filteredData.map((company, index) => (
-                        <tbody className="table-tbody">
-                          <tr>
-                            <td className="sort-name">{index + 1}</td>
-                            <td className="sort-name">
+                      <tbody>
+                        {currentData.map((company, index) => (
+                          <tr key={index} style={{ border: "1px solid #ddd" }}>
+                            <td
+                              style={{
+                                position: "sticky",
+                                left: "0px",
+                                zIndex: 1,
+                                background: "white",
+                              }}
+                            >
+                              {startIndex + index + 1}
+                            </td>
+                            <td
+                              style={{
+                                position: "sticky",
+                                left: "0px",
+                                zIndex: 1,
+                                background: "white",
+                              }}
+                            >
                               {company["Company Name"]}
                             </td>
-                            <td className="sort-name">
-                              {company["Company Number"]}
+                            <td>{company["Company Number"]}</td>
+                            <td>{company["Company Email"]}</td>
+                            <td>
+                              {formatDate(
+                                company["Company Incorporation Date  "]
+                              )}
                             </td>
-                            <td className="sort-name">
-                              {company["Company Email"]}
-                            </td>
-                            <td className="sort-name">
-                              {
-                                new Date(
-                                  company["Company Incorporation Date  "]
-                                )
-                                  .toISOString()
-                                  .split("T")[0]
-                              }
-                            </td>
-                            <td className="sort-name">{company["City"]}</td>
-                            <td className="sort-name">{company["State"]}</td>
-                            <td className="sort-name">
+                            <td>{company["City"]}</td>
+                            <td>{company["State"]}</td>
+                            <td>
                               <select
-                                className="form-control"
+                                style={{
+                                  width: "100%",
+                                  padding: ".4375rem .75rem",
+                                  border: "1px solid var(--tblr-border-color)",
+                                  borderRadius: "var(--tblr-border-radius)",
+                                }}
                                 value={company["Status"]}
-                                onChange={(e) => {
+                                onChange={(e) =>
                                   handleStatusChange(
                                     company._id,
                                     e.target.value
-                                  );
-                                }}
+                                  )
+                                }
                               >
-                                <option value="Busy ">Busy </option>
-                                <option value="Not Picked Up ">
-                                  Not Picked Up{" "}
+                                <option value="Untouched">Untouched </option>
+                                <option value="Busy">Busy </option>
+                                <option value="Not Picked Up">
+                                  Not Picked Up
                                 </option>
                                 <option value="Junk">Junk</option>
                                 <option value="Interested">Interested</option>
@@ -602,9 +824,9 @@ function EmployeePanel() {
                                 </option>
                               </select>
                             </td>
-                            <td className="sort-name">
-                              <input
-                              defaultValue={company["Remarks"]}
+                            <td>
+                              <textarea
+                                defaultValue={company["Remarks"]}
                                 onChange={(e) =>
                                   handlenewFieldChange(
                                     company._id,
@@ -613,23 +835,40 @@ function EmployeePanel() {
                                   )
                                 }
                                 type="text"
-                                className="form-control"
+                                style={{
+                                  padding: ".4375rem .75rem",
+                                  border:
+                                    " var(--tblr-border-width) solid var(--tblr-border-color)",
+                                  borderRadius: "var(--tblr-border-radius)",
+                                  boxShadow: "0 0 transparent",
+                                  transition:
+                                    "border-color .15s ease-in-out,box-shadow .15s ease-in-out",
+                                  height: "34px",
+                                }}
                               />
                             </td>
-                            <td className="sort-name">
+                            <td>
                               <button
                                 onClick={() => handleUpdate(company._id)}
                                 disabled={!isUpdateButtonEnabled(company._id)}
+                                style={{
+                                  padding: "5px",
+                                  fontSize: "12px",
+                                  backgroundColor: "green",
+                                  // transition: "background-color 0.3s ease", // Smooth transition effect
+                                  ":hover": {
+                                    backgroundColor: "lightgreen !important", // Background color when hovered
+                                  },
+                                }}
                                 className="btn btn-primary d-none d-sm-inline-block"
                               >
                                 Update
                               </button>
                             </td>
                           </tr>
-                        </tbody>
-                      ))
+                        ))}
+                      </tbody>
                     )}
-                    <tbody className="table-tbody"></tbody>
                   </table>
                 </div>
                 <div

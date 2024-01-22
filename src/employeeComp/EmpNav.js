@@ -17,7 +17,7 @@ function EmpNav({userId}) {
               <ul className="navbar-nav">
                 <li
                   className={
-                    location.pathname === "/employee-data" ? "nav-item active" : "nav-item"
+                    "nav-item active" 
                   }
                 >
                   {/* <Link
@@ -45,7 +45,7 @@ function EmpNav({userId}) {
                           <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
                         </svg>
                       </span>
-                      <span className="nav-link-title">Dashboard</span>
+                      <span className="nav-link-title">Leads</span>
                     </a>
                   {/* </Link> */}
                 </li>

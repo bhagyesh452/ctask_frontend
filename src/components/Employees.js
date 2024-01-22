@@ -2,14 +2,16 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Header from "./Header";
 import Navbar from "./Navbar";
-import { v4 as uuidv4 } from 'uuid';
-import { Link } from 'react-router-dom';
+import { v4 as uuidv4 } from "uuid";
+import { Link } from "react-router-dom";
 import LoginAdmin from "./LoginAdmin";
 import "../dist/css/tabler.min.css?1684106062";
 import "../dist/css/tabler-flags.min.css?1684106062";
 import "../dist/css/tabler-payments.min.css?1684106062";
 import "../dist/css/tabler-vendors.min.css?1684106062";
 import "../dist/css/demo.min.css?1684106062";
+import { IconTrash } from "@tabler/icons-react";
+import Swal from 'sweetalert2'
 // import EmployeeTable from "./EmployeeTable";
 import {
   Button,
@@ -24,7 +26,7 @@ import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import Modal from "react-modal";
 import { IconEye } from "@tabler/icons-react";
 
-function Employees({onEyeButtonClick}) {
+function Employees({ onEyeButtonClick }) {
   // const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedin')==='true');
   // const handleLogin = ()=>{
   //   setIsLoggedIn(true)
@@ -55,6 +57,7 @@ function Employees({onEyeButtonClick}) {
   };
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [data, setData] = useState([]);
+  const [cdata, setCData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [isUpdateMode, setIsUpdateMode] = useState(false);
   const [selectedDataId, setSelectedDataId] = useState("2024-01-03");
@@ -63,6 +66,8 @@ function Employees({onEyeButtonClick}) {
   const [number, setNumber] = useState(0);
   const [ename, setEname] = useState("");
   const [jdate, setJdate] = useState(null);
+  const [designation, setDesignation] = useState("");
+  const [otherdesignation, setotherDesignation] = useState("");
 
   const [open, openchange] = useState(false);
 
@@ -79,6 +84,7 @@ function Employees({onEyeButtonClick}) {
       setNumber(0);
       setPassword("");
       setJdate(null);
+      setDesignation("");
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
@@ -94,19 +100,39 @@ function Employees({onEyeButtonClick}) {
 
     setFilteredData(filtered);
   };
-  const handleUpdateClick = (id) => {
+  const [companyData, setCompanyData] = useState([]);
+  const handleUpdateClick = (id , echangename) => {
     // Set the selected data ID and set update mode to true
     setSelectedDataId(id);
     setIsUpdateMode(true);
+   setCompanyData(cdata.find((item)=> item.ename === echangename)) 
+  
 
     // Find the selected data object
     const selectedData = data.find((item) => item._id === id);
+    console.log(echangename);
+
 
     // Update the form data with the selected data values
     setEmail(selectedData.email);
     setEname(selectedData.ename);
     setNumber(selectedData.number);
     setPassword(selectedData.password);
+    if (
+      selectedData.designation !== "Sales Executive" ||
+      selectedData.designation !== "Sales Manager" ||
+      selectedData.designation !== "Graphics Designer" ||
+      selectedData.designation !== "Software Developer" ||
+      selectedData.designation !== "Finance Analyst" ||
+      selectedData.designation !== "Content Writer" ||
+      selectedData.designation !== "Admin Team"
+    ) {
+      setDesignation("Others");
+      setotherDesignation(selectedData.designation);
+    } else {
+      setDesignation(selectedData.designation);
+    }
+
     const dateObject = new Date(selectedData.jdate);
     const day = dateObject.getDate().toString().padStart(2, "0"); // Ensure two-digit day
     const month = (dateObject.getMonth() + 1).toString().padStart(2, "0"); // Months are zero-based
@@ -137,43 +163,86 @@ function Employees({onEyeButtonClick}) {
     setFilteredData(data);
     // Call the fetchData function
     fetchData();
+    fetchCData();
   }, []);
 
+  const fetchCData = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/leads");
+
+      // Set the retrieved data in the state
+
+      setCData(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    }
+  };
   const handleSubmit = async (e) => {
     console.log(jdate);
-    const referenceId = uuidv4();
+    // const referenceId = uuidv4();
+
     try {
-      if (isUpdateMode) {
-        await axios.put(`http://localhost:3001/einfo/${selectedDataId}`, {
-          email: email,
-          number: number,
-          ename: ename,
-          password: password,
-          jdate: jdate,
-        });
+      let dataToSend = {
+        email: email,
+        number: number,
+        ename: ename,
+        password: password,
+        jdate: jdate,
+      };
+
+      // Set designation based on otherDesignation
+      if (otherdesignation !== "") {
+        dataToSend.designation = otherdesignation;
       } else {
-        await axios.post("http://localhost:3001/einfo", {
-          email: email,
-          number: number,
-          ename: ename,
-          password: password,
-          jdate: jdate,   
-          
-        });
+        dataToSend.designation = designation;
       }
+
+      if (isUpdateMode) {
+        await axios.put(
+          `http://localhost:3001/einfo/${selectedDataId}`,
+          dataToSend
+        );
+
+        // if(companyData.length!==0){
+        //   companyData.map(async(item)=>(
+        //     await axios.put(
+        //       `http://localhost:3001/newcompanyname/${item._id}`,
+        //       ename
+        //     )
+        //   ))
+        // }
+        Swal.fire({
+          title: "Data Updated!",
+          text: "You have successfully updated the data!",
+          icon: "success"
+        });
+       
+
+      } else {
+        await axios.post("http://localhost:3001/einfo", dataToSend);
+      }
+
       setEmail("");
       setEname("");
       setNumber(0);
       setPassword("");
+      setDesignation("");
+      setotherDesignation("");
       setJdate(null);
       setIsUpdateMode(false);
       fetchData();
       closepopup();
-      console.log("Data send successfully");
+      console.log("Data sent successfully");
     } catch {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong!",
+      });
       console.error("Internal server error");
     }
   };
+
   const functionopenpopup = () => {
     openchange(true);
   };
@@ -181,18 +250,27 @@ function Employees({onEyeButtonClick}) {
     openchange(false);
   };
 
-//   cInfo:{
-//     "Company Name": referenceId + "company",
+  //   cInfo:{
+  //     "Company Name": referenceId + "company",
 
-// "Company Email": referenceId + "email",
-// "Company Incorporation Date  ": new Date(),
-// "Company Number": Math.floor(Math.random() * 1000000),
-// City: referenceId + "city",
-// State: referenceId + "state",
-//   }       
+  // "Company Email": referenceId + "email",
+  // "Company Incorporation Date  ": new Date(),
+  // "Company Number": Math.floor(Math.random() * 1000000),
+  // City: referenceId + "city",
+  // State: referenceId + "state",
+  //   }
 
   // const formattedDate = new Date(jdate).toLocaleDateString();
   //   console.log('Formatted Date:', formattedDate);
+
+  function formatDate(inputDate) {
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    const formattedDate = new Date(inputDate).toLocaleDateString(
+      "en-US",
+      options
+    );
+    return formattedDate;
+  }
 
   return (
     <div>
@@ -267,19 +345,72 @@ function Employees({onEyeButtonClick}) {
                     }}
                   />
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    className="form-control"
-                    name="example-text-input"
-                    placeholder="Your report name"
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                    }}
-                  />
+
+                <div className="row">
+                  <div className="col-lg-6 mb-3">
+                    <label className="form-label">Designation</label>
+                    <div className="form-control">
+                      <select
+                        style={{
+                          border: "none",
+                          outline: "none",
+                          width: "fit-content",
+                        }}
+                        value={designation}
+                        required
+                        onChange={(e) => {
+                          setDesignation(e.target.value);
+                        }}
+                      >
+                        <option value="" disabled selected>
+                          Select Designation
+                        </option>
+                        <option value="Sales Executive">Sales Executive</option>
+                        <option value="Sales Manager">Sales Manager</option>
+                        <option value="Graphics Designer">
+                          Graphics Designer
+                        </option>
+                        <option value="Software Developer">
+                          Software Developer
+                        </option>
+                        <option value="Finance Analyst">Finance Analyst</option>
+                        <option value="Content Writer">Content Writer</option>
+                        <option value="Admin Team">Admin Team</option>
+                        <option value="Others">Others</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-6 mb-3">
+                    <label className="form-label">Password</label>
+                    <input
+                      type="password"
+                      value={password}
+                      className="form-control"
+                      name="example-text-input"
+                      placeholder="Your report name"
+                      required
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                      }}
+                    />
+                  </div>
                 </div>
+                {/* If the designation is others */}
+                {designation === "Others" && (
+                  <div className="mb-3">
+                    <input
+                      value={otherdesignation}
+                      type="email"
+                      className="form-control"
+                      name="example-text-input"
+                      placeholder="Please enter your designation"
+                      onChange={(e) => {
+                        setotherDesignation(e.target.value);
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="row">
@@ -399,16 +530,19 @@ function Employees({onEyeButtonClick}) {
           </div>
         </div>
       </div>
-    
+
       {/* Employee table */}
-      <div onCopy={(e)=>{
-        e.preventDefault()
-      }} className="page-body">
+      <div
+        onCopy={(e) => {
+          e.preventDefault();
+        }}
+        className="page-body"
+      >
         <div className="container-xl">
           <div className="card">
-            <div className="card-body">
-              <div id="table-default" className="table-responsive">
-                <table className="table">
+            <div style={{padding:"0px"}} className="card-body">
+              <div id="table-default">
+                <table style={{margin:"0px"}} className="table">
                   <thead>
                     <tr>
                       <th>
@@ -437,6 +571,11 @@ function Employees({onEyeButtonClick}) {
                         </button>
                       </th>
                       <th>
+                        <button className="table-sort" data-sort="sort-date">
+                          Designation
+                        </button>
+                      </th>
+                      <th>
                         <button
                           className="table-sort"
                           data-sort="sort-quantity"
@@ -447,38 +586,49 @@ function Employees({onEyeButtonClick}) {
                     </tr>
                   </thead>
                   {filteredData.length == 0 ? (
-                    <div>No data available</div>
+                    <tbody>
+                    <tr>
+                      <td colSpan="10" style={{ textAlign: "center" }}>
+                        No data available
+                      </td>
+                    </tr>
+                  </tbody>
                   ) : (
                     filteredData.map((item, index) => (
                       <tbody className="table-tbody">
                         <tr>
-                          <td className="sort-name">{index + 1}</td>
-                          <td className="sort-name">{item.ename}</td>
-                          <td className="sort-city">{item.number}</td>
-                          <td className="sort-type">{item.email}</td>
-                          <td className="sort-type">{item.jdate}</td>
-                          <td className="sort-score">
-                            <IconButton
-                              onClick={() => handleDeleteClick(item._id)}
-                            >
-                              <DeleteIcon>Delete</DeleteIcon>
-                            </IconButton>
-                            <IconButton
-                              onClick={() => {
-                                functionopenpopup();
-                                handleUpdateClick(item._id);
-                              }}
-                            >
-                              <ModeEditIcon>Update</ModeEditIcon>
-                            </IconButton>
-                            <Link to={`/employees/${item._id}`}>
-                            <IconButton 
-                              >
+                          <td className="sort-name pad">{index + 1}</td>
+                          <td className="sort-name pad">{item.ename}</td>
+                          <td className="sort-city pad">{item.number}</td>
+                          <td className="sort-type pad">{item.email}</td>
+                          <td className="sort-type pad">
+                            {formatDate(item.jdate)}</td>
+                          <td className="sort-type pad">{item.designation}</td>
+                          <td style={{justifyContent:"center"}} className="sort-score pad d-flex text-align-center">
+                            <div className="icons-btn">
+                              <IconTrash
+                                onClick={() => handleDeleteClick(item._id)}
+                              />
+                            </div>
 
-                              <IconEye/>
-                            </IconButton>
-                            </Link>
-                           
+                            <div className="icons-btn">
+                              <ModeEditIcon
+                                onClick={() => {
+                                  functionopenpopup();
+                                  handleUpdateClick(item._id , item.ename);
+                                }}
+                              >
+                                Update
+                              </ModeEditIcon>
+                            </div>
+                            <div className="icons-btn">
+                              <Link
+                                
+                                to={`/employees/${item._id}`}
+                              >
+                                <IconEye />
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       </tbody>

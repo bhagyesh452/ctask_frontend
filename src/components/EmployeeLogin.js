@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-function EmployeeLogin({setnewToken}) {
+function EmployeeLogin({ setnewToken }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [data, setData] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [userId, setUserId] = useState(null);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -18,45 +20,47 @@ function EmployeeLogin({setnewToken}) {
   };
 
   const findUserId = () => {
-    const user = data.find((user) => user.email === email && user.password === password);
-  
+    const user = data.find(
+      (user) => user.email === email && user.password === password
+    );
+
     if (user) {
       setUserId(user._id);
     } else {
       setUserId(null);
-      
     }
   };
-  
+
   useEffect(() => {
     fetchData();
-  }, []); 
-  
+  }, []);
+
   // Trigger the findUserId function when email or password changes
   useEffect(() => {
     findUserId();
   }, [email, password]);
 
   console.log(userId);
-  
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:3001/employeelogin', { email, password });
+      const response = await axios.post("http://localhost:3001/employeelogin", {
+        email,
+        password,
+      });
 
       const { newtoken } = response.data;
       setnewToken(newtoken);
-      localStorage.setItem('newtoken', newtoken);
-      localStorage.setItem('userId', userId);
+      localStorage.setItem("newtoken", newtoken);
+      localStorage.setItem("userId", userId);
       window.location.replace(`http://localhost:3000/employee-data/${userId}`);
     } catch (error) {
-      console.error('Login failed:', error.message);
+      console.error("Login failed:", error.message);
       setErrorMessage("Incorrect Credentials");
       // setErrorMessage("Incorrect Credentials!");
     }
-  }
+  };
 
   return (
     <div>
@@ -95,18 +99,18 @@ function EmployeeLogin({setnewToken}) {
                       onChange={(e) => {
                         setPassword(e.target.value);
                       }}
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       className="form-control"
                       placeholder="Your password"
-                      autocomplete="off"
+                      autoComplete="off"
                     />
                     <span className="input-group-text">
-                      {/* <!-- Download SVG icon from http://tabler-icons.io/i/eye --> */}
                       <a
                         href="#"
                         className="link-secondary"
                         title="Show password"
                         data-bs-toggle="tooltip"
+                        onClick={() => setShowPassword(!showPassword)}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -114,11 +118,11 @@ function EmployeeLogin({setnewToken}) {
                           width="24"
                           height="24"
                           viewBox="0 0 24 24"
-                          stroke-width="2"
+                          strokeWidth="2"
                           stroke="currentColor"
                           fill="none"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
                           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                           <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
@@ -129,9 +133,7 @@ function EmployeeLogin({setnewToken}) {
                   </div>
                 </div>
                 <div style={{ textAlign: "center", color: "red" }}>
-                  <span>
-                    {errorMessage}
-                  </span>
+                  <span>{errorMessage}</span>
                 </div>
 
                 <div className="form-footer">

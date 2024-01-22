@@ -1,4 +1,5 @@
 import React from "react";
+import Papa from "papaparse";
 import Header from "./Header";
 import Navbar from "./Navbar";
 import axios from "axios";
@@ -9,6 +10,7 @@ import { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Swal from "sweetalert2";
 import {
   Button,
   Dialog,
@@ -28,7 +30,7 @@ import { json } from "react-router-dom";
 function Leads() {
   const [open, openchange] = useState(false);
   const [month, setMonth] = useState(0);
-  const [year, setYear] = useState(0);
+  const [year, setYear] = useState();
   const [openNew, openchangeNew] = useState(false);
   const [openEmp, openchangeEmp] = useState(false);
   const [openConf, openChangeConf] = useState(false);
@@ -43,6 +45,8 @@ function Leads() {
   const [citySearch, setcitySearch] = useState("");
   const [selectedField, setSelectedField] = useState("Company Name");
   const [employeeSelection, setEmployeeSelection] = useState("Select Employee");
+  const [newemployeeSelection, setnewEmployeeSelection] =
+    useState("Select Employee");
   const [newempData, setnewEmpData] = useState([]);
   // const [currentData, setCurrentData] = useState([]);
 
@@ -58,7 +62,12 @@ function Leads() {
   const itemsPerPage = 10;
   const [visibility, setVisibility] = useState("none");
   const [visibilityOther, setVisibilityOther] = useState("block");
+  const [visibilityOthernew, setVisibilityOthernew] = useState("none");
   const [subFilterValue, setSubFilterValue] = useState("");
+
+  // Requested Details
+  const [requestData, setRequestData] = useState([]);
+  const [requestGData, setRequestGData] = useState([]);
 
   //fetch data
   const fetchData = async () => {
@@ -78,6 +87,8 @@ function Leads() {
     // Call the fetchData function
     fetchData();
     fetchnewData();
+    fetchRequestDetails();
+    fetchRequestGDetails();
   }, []);
   // const fileInputRef = useRef(null);
   const functionopenpopup = () => {
@@ -255,35 +266,142 @@ function Leads() {
         // Assuming there's only one sheet in the XLSX file
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-        setCsvData(jsonData);
+
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        const formattedJsonData = jsonData
+        .slice(1) // Exclude the first row (header)
+        .map((row) => ({
+          "Sr. No": row[0],
+          "Company Name": row[1],
+          "Company Number": row[2],
+          "Company Email": row[3],
+          "Company Incorporation Date  ": formatDateFromExcel(row[4]), // Assuming the date is in column 'E' (0-based)
+          "City": row[5],
+          "State": row[6],
+        }));
+
+        setCsvData(formattedJsonData);
       };
 
       reader.readAsArrayBuffer(file);
+    } else if (file.type === "text/csv") {
+      // CSV file
+      const parsedCsvData = parseCsv(data);
+      setCsvData(parsedCsvData);
     } else {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "Something went wrong!",
+        footer: '<a href="#">Why do I have this issue?</a>',
+      });
+
       console.error("Please upload a valid XLSX file.");
     }
   };
 
+  const parseCsv = (data) => {
+    // Use a CSV parsing library (e.g., Papaparse) to parse CSV data
+    // Example using Papaparse:
+    const parsedData = Papa.parse(data, { header: true });
+    return parsedData.data;
+  };
+  function formatDateFromExcel(serialNumber) {
+    // Excel uses a different date origin (January 1, 1900)
+    const excelDateOrigin = new Date(Date.UTC(1900, 0, 0));
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+
+    // Adjust for Excel leap year bug (1900 is not a leap year)
+    const daysAdjustment = serialNumber > 59 ? 1 : 0;
+
+    // Calculate the date in milliseconds
+    const dateMilliseconds =
+      excelDateOrigin.getTime() +
+      (serialNumber - daysAdjustment) * millisecondsPerDay;
+
+    // Create a Date object using the calculated milliseconds
+    const formattedDate = new Date(dateMilliseconds);
+
+    // Format the date as needed (you can use a library like 'date-fns' or 'moment' for more options)
+    // const formattedDateString = formattedDate.toISOString().split('T')[0];
+
+    return formattedDate;
+  }
+  // csvdata.map((item)=>{
+  //   console.log(formatDateFromExcel(item["Company Incorporation Date  "]))
+  // })
+  console.log(csvdata);
+
   const handleUploadData = async (e) => {
-    if (csvdata.length !== 0) {
-      try {
-        await axios.post("http://localhost:3001/api/leads", csvdata);
-        console.log("Data sent successfully");
-        fetchData();
-      } catch (error) {
-        if (error.response.status !== 500) {
-          setErrorMessage(error.response.data.error);
-          alert("Some of the data are not unique");
-        } else {
-          setErrorMessage("An error occurred. Please try again.");
-          alert("Please upload unique data");
+    if (selectedOption === "someoneElse") {
+      if (csvdata.length !== 0) {
+        for (const obj of csvdata) {
+          if (!obj.ename) {
+            try {
+              const response = await axios.post(
+                "http://localhost:3001/api/company",
+                {
+                  newemployeeSelection,
+                  csvdata,
+                }
+              );
+              window.location.reload();
+              console.log("Data posted successfully");
+            } catch (err) {
+              console.log("Internal server Error", err);
+            }
+          } else {
+            // If ename is present, show a confirmation dialog
+            const userConfirmed = window.confirm(
+              `Data is already assigned to: ${obj.ename}. Do you want to continue?`
+            );
+
+            if (userConfirmed) {
+              // If user confirms, perform the assignation
+              try {
+                const response = await axios.post(
+                  "http://localhost:3001/api/postData",
+                  {
+                    newemployeeSelection,
+                    csvdata,
+                  }
+                );
+                window.location.reload();
+                console.log("Data posted successfully");
+              } catch (err) {
+                console.log("Internal server Error", err);
+              }
+            } else {
+              // If user cancels, you can handle it as needed (e.g., show a message)
+              console.log("User canceled the assignation.");
+            }
+          }
         }
-        console.log("Error:", error);
+      } else {
+        alert("Please Select a file");
       }
-      setCsvData([]);
     } else {
-      alert("Please upload data");
+      console.log("Assigning Normally");
+      if (csvdata.length !== 0) {
+        try {
+          await axios.post("http://localhost:3001/api/leads", csvdata);
+          console.log("Data sent successfully");
+          fetchData();
+        } catch (error) {
+          if (error.response.status !== 500) {
+            setErrorMessage(error.response.data.error);
+            alert("Some of the data are not unique");
+          } else {
+            setErrorMessage("An error occurred. Please try again.");
+            alert("Please upload unique data");
+          }
+          console.log("Error:", error);
+        }
+        setCsvData([]);
+      } else {
+        alert("Please upload data");
+      }
     }
   };
   // const handleUploadClick = () => {
@@ -384,6 +502,9 @@ function Leads() {
     const selectedObjects = data.filter((row) =>
       selectedRows.includes(row._id)
     );
+    if (selectedObjects.length === 0) {
+      alert("Empty Data!");
+    }
     console.log(selectedObjects, employeeSelection);
     for (const obj of selectedObjects) {
       if (!obj.ename) {
@@ -550,9 +671,65 @@ function Leads() {
     }
   };
 
+  function formatDate(inputDate) {
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    const formattedDate = new Date(inputDate).toLocaleDateString(
+      "en-US",
+      options
+    );
+    return formattedDate;
+  }
+
+  // Assign to someone else
+
+  const [selectedOption, setSelectedOption] = useState("direct");
+
+  const handleOptionChange = (event) => {
+    setSelectedOption(event.target.value);
+  };
+
+  // ----------------------------------------- INCOMING REQUEST FROM AN EMPLOYEE---------------------------------------------
+
+  const fetchRequestDetails = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/requestData");
+      setRequestData(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    }
+  };
+  const fetchRequestGDetails = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/requestgData");
+      setRequestGData(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error.message);
+    }
+  };
+
+  console.log(requestData);
+  console.log(requestGData);
+
+  const thTdStyle = {
+    padding: "8px",
+    border: "1px solid #ddd",
+  };
+
+  const thStyle = {
+    backgroundColor: "#f2f2f2",
+    position: "sticky",
+    top: "0",
+    zIndex: "1",
+  };
+
+  const stickyColumnsStyle = {
+    left: "0",
+    zIndex: "2",
+    backgroundColor: "#fff",
+  };
   return (
     <div>
-      <Header />
+      <Header data={requestData} gdata={requestGData}  />
       <Navbar />
       <Modal
         isOpen={isModalOpen}
@@ -843,32 +1020,118 @@ function Leads() {
         <div>
           <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
             <DialogTitle>
-              Upload Files{" "}
+              Import CSV DATA{" "}
               <IconButton onClick={closepopup} style={{ float: "right" }}>
                 <CloseIcon color="primary"></CloseIcon>
               </IconButton>{" "}
             </DialogTitle>
             <DialogContent>
-              <input
+              <div className="maincon">
+                <div
+                  style={{ justifyContent: "space-between" }}
+                  className="con1 d-flex"
+                >
+                  <div className="uploadcsv">
+                    <label
+                      style={{ margin: "0px 0px 6px 0px" }}
+                      htmlFor="upload"
+                    >
+                      Upload CSV File
+                    </label>
+                    <div className="form-control">
+                      <input
+                        type="file"
+                        name="csvfile
+                      "
+                        id="csvfile"
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                  </div>
+                  <div className="downloadsample">
+                    <button className="btn">Download CSV</button>
+                  </div>
+                </div>
+                <div className="con2 d-flex">
+                  <div
+                    style={{ margin: "10px 10px 0px 0px" }}
+                    className="direct form-control"
+                  >
+                    <input
+                      type="radio"
+                      id="direct"
+                      value="direct"
+                      checked={selectedOption === "direct"}
+                      onChange={handleOptionChange}
+                    />
+                    <label htmlFor="direct">Assign Directly?</label>
+                  </div>
+                  <div
+                    style={{ margin: "10px 0px 0px 10px" }}
+                    className="indirect form-control"
+                  >
+                    <input
+                      type="radio"
+                      id="someoneElse"
+                      value="someoneElse"
+                      checked={selectedOption === "someoneElse"}
+                      onChange={handleOptionChange}
+                    />
+                    <label htmlFor="someoneElse">Assign to Employee</label>
+                  </div>
+                </div>
+              </div>
+              {/* <input
                 type="file"
                 ref={fileInputRef}
                 style={{ display: "none" }}
                 onChange={handleFileChange}
               />
-              <button onClick={handleButtonClick}>Choose File</button>
-              <div
-                style={{ display: "flex", justifyContent: "space-between" }}
-                className="footer"
-              >
-                <Button onClick={closepopup}>Cancel</Button>
-                <button
-                  onClick={handleUploadData}
-                  className="btn btn-primary d-none d-sm-inline-block"
-                >
-                  Upload
-                </button>
-              </div>
+              <button onClick={handleButtonClick}>Choose File</button> */}
+
+              {selectedOption === "someoneElse" && (
+                <div>
+                  {newempData.length !== 0 ? (
+                    <>
+                      <div className="dialogAssign">
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            margin: " 10px 0px 0px 0px",
+                          }}
+                          className="selector"
+                        >
+                          <label>Select an Employee</label>
+                          <select
+                            style={{ padding: "5px" }}
+                            value={newemployeeSelection}
+                            onChange={(e) => {
+                              setnewEmployeeSelection(e.target.value);
+                            }}
+                          >
+                            <option value="Select Employee" disabled>
+                              Select employee
+                            </option>
+                            {newempData.map((item) => (
+                              <option value={item.ename}>{item.ename}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <h1>No Employees Found</h1>
+                    </div>
+                  )}
+                </div>
+              )}
             </DialogContent>
+            <Button variant="contained" onClick={handleUploadData}>
+              Submit
+            </Button>
           </Dialog>
         </div>
       )}
@@ -877,102 +1140,13 @@ function Leads() {
         <div className="page-header d-print-none">
           <div className="container-xl">
             <div className="row g-2 align-items-center">
-              <div className="col">
-                {/* <!-- Page pre-title --> */}
-                <h2 className="page-title">Leads</h2>
-              </div>
               <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-                className="features"
+                style={{ display: "flex", justifyContent: "space-between" }}
+                className="tit"
               >
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  className="feature1"
-                >
-                  <div style={{ margin: "20px 0px" }} className="filter">
-                    <div style={{ display: "flex" }} className="mb-0">
-                      <div className="form-control">
-                        <select
-                          style={{ border: "none", outline: "none" }}
-                          value={selectedField}
-                          onChange={handleFieldChange}
-                        >
-                          <option value="Company Name">Company Name</option>
-                          <option value="Company Number">Company Number</option>
-                          <option value="Company Email">Company Email</option>
-                          <option value="Company Incorporation Date  ">
-                            Company Incorporation Date
-                          </option>
-                          <option value="City">City</option>
-                          <option value="State">State</option>
-                        </select>
-                        {/* <Select value={selectedField} onChange={handleFieldChange}>
-                      <MenuItem value="Company Name">Company Name</MenuItem>
-                      <MenuItem value="Company Number">Company Number</MenuItem>
-                      <MenuItem value="Company Email">Company Email</MenuItem>
-                      <MenuItem value="Company Incorporation Date  ">Company Incorporation Date</MenuItem>
-                      <MenuItem value="City">City</MenuItem>
-                      <MenuItem value="State">State</MenuItem>
-                    
-                    </Select> */}
-                      </div>
-
-                      <input
-                        onChange={handleDateChange}
-                        style={{ display: visibility }}
-                        type="date"
-                        className="form-control"
-                      />
-                    </div>
-                  </div>
-
-                  <div
-                    style={{ margin: "0px 10px", display: visibilityOther }}
-                    className="searchbar"
-                  >
-                    <div style={{ width: "20vw" }} className="input-icon">
-                      <span className="input-icon-addon">
-                        {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="icon"
-                          width="20"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          stroke-width="2"
-                          stroke="currentColor"
-                          fill="none"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                          <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                          <path d="M21 21l-6 -6" />
-                        </svg>
-                      </span>
-                      <input
-                        type="text"
-                        value={searchText}
-                        onChange={(e) => {
-                          setSearchText(e.target.value);
-                          setCurrentPage(0);
-                        }}
-                        className="form-control"
-                        placeholder="Search…"
-                        aria-label="Search in website"
-                      />
-                    </div>
-                  </div>
+                {/* <!-- Page pre-title --> */}
+                <div className="headtit">
+                  <h2 className="page-title">Leads</h2>
                 </div>
                 <div
                   style={{
@@ -1095,75 +1269,64 @@ function Leads() {
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div className="subfilter">
-              {selectedField === "State" && (
-                <div style={{ width: "15vw" }} className="input-icon">
-                  <hr style={{ margin: "10px" }} />
-                  <span className="input-icon-addon">
-                    {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="icon"
-                      width="20"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      stroke-width="2"
-                      stroke="currentColor"
-                      fill="none"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+                className="features"
+              >
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                  className="features"
+                >
+                  <div style={{ display: "flex" }} className="feature1">
+                    <div
+                      className="form-control"
+                      style={{ height: "fit-content", width: "15vw" }}
                     >
-                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                      <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
-                      <path d="M21 21l-6 -6" />
-                    </svg>
-                  </span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={citySearch}
-                    onChange={(e) => {
-                      setcitySearch(e.target.value);
-                      setCurrentPage(0);
-                    }}
-                    placeholder="Search City"
-                    aria-label="Search in website"
-                  />
-                </div>
-              )}
-              {selectedField === "Company Incorporation Date  " && (
-                <div style={{ width: "fit-content" }} className="input-icon">
-                  <hr style={{ margin: "10px" }} />
-                  <div style={{ display: "flex" }} className="mb-0">
-                    <div className="form-control">
                       <select
-                        style={{ border: "none", outline: "none" }}
-                        onChange={(e) => {
-                          setMonth(e.target.value);
+                        style={{
+                          border: "none",
+                          outline: "none",
+                          width: "fit-content",
                         }}
+                        value={selectedField}
+                        onChange={handleFieldChange}
                       >
-                        <option value="" disabled selected>
-                          Select Month
+                        <option value="Company Name">Company Name</option>
+                        <option value="Company Number">Company Number</option>
+                        <option value="Company Email">Company Email</option>
+                        <option value="Company Incorporation Date  ">
+                          Company Incorporation Date
                         </option>
-                        <option value="12">12</option>
-                        <option value="11">11</option>
-                        <option value="10">10</option>
-                        <option value="9">9</option>
-                        <option value="8">8</option>
-                        <option value="7">7</option>
-                        <option value="6">6</option>
-                        <option value="5">5</option>
-                        <option value="4">4</option>
-                        <option value="3">3</option>
-                        <option value="2">2</option>
-                        <option value="1">1</option>
+                        <option value="City">City</option>
+                        <option value="State">State</option>
+                        <option value="Status">Status</option>
                       </select>
                     </div>
-                    <div className="form-control">
+                    {visibility === "block" ? (
+                      <div>
+                        <input
+                          onChange={handleDateChange}
+                          style={{ display: visibility }}
+                          type="date"
+                          className="form-control"
+                        />
+                      </div>
+                    ) : (
+                      <div></div>
+                    )}
+
+                    {visibilityOther === "block" ? (
                       <div
-                        style={{ width: "fit-content" }}
+                        style={{
+                          width: "20vw",
+                          margin: "0px 10px",
+                          display: visibilityOther,
+                        }}
                         className="input-icon"
                       >
                         <span className="input-icon-addon">
@@ -1186,20 +1349,150 @@ function Leads() {
                           </svg>
                         </span>
                         <input
-                          type="number"
-                          className="form-control"
-                          value={year}
+                          type="text"
+                          value={searchText}
                           onChange={(e) => {
-                            setYear(e.target.value);
+                            setSearchText(e.target.value);
+                            setCurrentPage(0);
                           }}
-                          placeholder="Search by Year"
+                          className="form-control"
+                          placeholder="Search…"
                           aria-label="Search in website"
                         />
                       </div>
+                    ) : (
+                      <div></div>
+                    )}
+                    {visibilityOthernew === "block" ? (
+                      <div
+                        style={{
+                          width: "20vw",
+                          margin: "0px 10px",
+                          display: visibilityOthernew,
+                        }}
+                        className="input-icon form-control"
+                      >
+                        <select
+                          value={searchText}
+                          onChange={(e) => {
+                            setSearchText(e.target.value);
+                          }}
+                        >
+                          <option value="All">All </option>
+                          <option value="Busy ">Busy </option>
+                          <option value="Not Picked Up ">Not Picked Up </option>
+                          <option value="Junk">Junk</option>
+                          <option value="Interested">Interested</option>
+                          <option value="Not Interested">Not Interested</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div></div>
+                    )}
+                  </div>
+                  {searchText !== "" ? (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        fontSize: "16px",
+                        fontFamily: "sans-serif",
+                      }}
+                      className="results"
+                    >
+                      {filteredData.length} results found
                     </div>
+                  ) : (
+                    <div></div>
+                  )}
+
+                  <div
+                    style={{ display: "flex", alignItems: "center" }}
+                    className="feature2"
+                  >
+                    {selectedField === "State" && (
+                      <div style={{ width: "15vw" }} className="input-icon">
+                        <span className="input-icon-addon">
+                          {/* <!-- Download SVG icon from http://tabler-icons.io/i/search --> */}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="icon"
+                            width="20"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            fill="none"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+                            <path d="M21 21l-6 -6" />
+                          </svg>
+                        </span>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={citySearch}
+                          onChange={(e) => {
+                            setcitySearch(e.target.value);
+                            setCurrentPage(0);
+                          }}
+                          placeholder="Search City"
+                          aria-label="Search in website"
+                        />
+                      </div>
+                    )}
+                    {selectedField === "Company Incorporation Date  " && (
+                      <>
+                        <div
+                          style={{ width: "fit-content" }}
+                          className="form-control"
+                        >
+                          <select
+                            style={{ border: "none", outline: "none" }}
+                            onChange={(e) => {
+                              setMonth(e.target.value);
+                              setCurrentPage(0);
+                            }}
+                          >
+                            <option value="" disabled selected>
+                              Select Month
+                            </option>
+                            <option value="12">December</option>
+                            <option value="11">November</option>
+                            <option value="10">October</option>
+                            <option value="9">September</option>
+                            <option value="8">August</option>
+                            <option value="7">July</option>
+                            <option value="6">June</option>
+                            <option value="5">May</option>
+                            <option value="4">April</option>
+                            <option value="3">March</option>
+                            <option value="2">February</option>
+                            <option value="1">January</option>
+                          </select>
+                        </div>
+                        <div className="input-icon">
+                          <input
+                            type="number"
+                            value={year}
+                            defaultValue="Select Year"
+                            className="form-control"
+                            placeholder="Select Year.."
+                            onChange={(e) => {
+                              setYear(e.target.value);
+                            }}
+                            aria-label="Search in website"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -1209,22 +1502,22 @@ function Leads() {
       <div className="page-body">
         <div className="container-xl">
           <div className="card">
-            <div className="card-body">
+            <div className="card-body p-0">
               <div id="table-default" className="table-responsive">
-                <table className="table">
+                <table className="table table-vcenter table-nowrap">
                   <thead>
                     <tr>
-                      <th>
+                      <th style={{ position: "sticky", left: 0, zIndex: 1, background: "white" }}>
                         <button className="table-sort" data-sort="sort-name">
                           Select
                         </button>
                       </th>
-                      <th>
+                      <th >
                         <button className="table-sort" data-sort="sort-name">
                           Sr.No
                         </button>
                       </th>
-                      <th>
+                      <th style={{ position: "sticky", left: "100px", zIndex: 1, background: "white" }}>
                         <button className="table-sort" data-sort="sort-city">
                           Company Name
                         </button>
@@ -1241,7 +1534,7 @@ function Leads() {
                       </th>
                       <th>
                         <button className="table-sort" data-sort="sort-date">
-                          Company Inco. Date
+                          Incorporation Date
                         </button>
                       </th>
                       <th>
@@ -1257,6 +1550,11 @@ function Leads() {
                       <th>
                         <button className="table-sort" data-sort="sort-date">
                           Status
+                        </button>
+                      </th>
+                      <th>
+                        <button className="table-sort" data-sort="sort-date">
+                          Remarks
                         </button>
                       </th>
                       <th>
@@ -1278,27 +1576,34 @@ function Leads() {
                     </tr>
                   </thead>
                   {currentData.length == 0 ? (
-                    <div>
-                      <h2 style={{ textAlign: "center" }}>
-                        {" "}
-                        No data available
-                      </h2>
-                    </div>
+                    <tbody>
+                      <tr>
+                        <td colSpan="10" style={{ textAlign: "center" }}>
+                          No data available
+                        </td>
+                      </tr>
+                    </tbody>
                   ) : (
                     currentData.map((company, index) => (
                       <tbody className="table-tbody">
                         <tr>
-                          <td>
+                          <td style={{ position: "sticky", left: 0, zIndex: 1, background: "white" }}>
                             <input
                               type="checkbox"
                               checked={selectedRows.includes(company._id)}
                               onChange={() => handleCheckboxChange(company._id)}
                             />
                           </td>
-                          <td className="sort-name">
+                          <td 
+                            
+                            className="sort-name"
+                          >
                             {startIndex + index + 1}
                           </td>
-                          <td className="sort-name">
+                          <td style={{ position: "sticky", left: "100px", zIndex: 1, background: "white" }}
+                            
+                            className="sort-name"
+                          >
                             {company["Company Name"]}
                           </td>
                           <td className="sort-name">
@@ -1308,16 +1613,15 @@ function Leads() {
                             {company["Company Email"]}
                           </td>
                           <td className="sort-name">
-                            {
-                              new Date(company["Company Incorporation Date  "])
-                                .toISOString()
-                                .split("T")[0]
-                            }
+                            {formatDate(
+                              company["Company Incorporation Date  "]
+                            )}
                           </td>
                           <td className="sort-name">{company["City"]}</td>
                           <td className="sort-name">{company["State"]}</td>
                           <td className="sort-name">{company["Status"]}</td>
-                          <td className="sort-name">{company["AssignDate"]}</td>
+                          <td className="sort-name">{company["Remarks"]}</td>
+                          <td className="sort-name">{formatDate(company["AssignDate"])}</td>
                           <td className="sort-name">
                             <IconButton
                               onClick={() => handleDeleteClick(company._id)}
@@ -1338,8 +1642,8 @@ function Leads() {
                   justifyContent: "space-between",
                   margin: "10px",
                 }}
-                className="pagination">
-              
+                className="pagination"
+              >
                 <IconButton
                   onClick={() =>
                     setCurrentPage((prevPage) => Math.max(prevPage - 1, 0))
@@ -1350,7 +1654,7 @@ function Leads() {
                 </IconButton>
                 <span>
                   Page {currentPage + 1} of{" "}
-                  {Math.ceil(data.length / itemsPerPage)}
+                  {Math.ceil(filteredData.length / itemsPerPage)}
                 </span>
 
                 <IconButton
@@ -1358,12 +1662,13 @@ function Leads() {
                     setCurrentPage((prevPage) =>
                       Math.min(
                         prevPage + 1,
-                        Math.ceil(data.length / itemsPerPage) - 1
+                        Math.ceil(filteredData.length / itemsPerPage) - 1
                       )
                     )
                   }
                   disabled={
-                    currentPage === Math.ceil(data.length / itemsPerPage) - 1
+                    currentPage ===
+                    Math.ceil(filteredData.length / itemsPerPage) - 1
                   }
                 >
                   <IconChevronRight />

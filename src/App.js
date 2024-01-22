@@ -11,6 +11,8 @@ import Logout from './components/Logout';
 import Leads from './components/Leads';
 import EmployeeLogin from './components/EmployeeLogin';
 import EmployeePanel from './employeeComp/EmployeePanel';
+import ShowNotification from './components/ShowNotification';
+
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -31,6 +33,8 @@ function App() {
           <Route path="/employees" element={<Employees/>}/>
           <Route path="/employees/:id"  element={<EmployeeParticular/>}/>
           <Route path="/leads" element={<Leads/>}/>
+          <Route path="/notification" element={<ShowNotification/>}/>
+
           
                   
         </>
