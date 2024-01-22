@@ -64,7 +64,7 @@ function Header({ name, designation, data , gdata }) {
                 
                 <div className="d-xl-block ps-2">
                   <div>{name ? name : "Username"}</div>
-                  <div className="mt-1 small text-muted">
+                  <div style={{textAlign:"left"}} className="mt-1 small text-muted">
                     {designation ? designation : "Admin"}
                   </div>
                 </div>

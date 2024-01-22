@@ -33,9 +33,7 @@ function App() {
           <Route path="/employees" element={<Employees/>}/>
           <Route path="/employees/:id"  element={<EmployeeParticular/>}/>
           <Route path="/leads" element={<Leads/>}/>
-          <Route path="/notification" element={<ShowNotification/>}/>
-
-          
+          <Route path="/notification" element={<ShowNotification/>}/>         
                   
         </>
           ): (

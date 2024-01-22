@@ -1578,7 +1578,7 @@ function Leads() {
                   {currentData.length == 0 ? (
                     <tbody>
                       <tr>
-                        <td colSpan="10" style={{ textAlign: "center" }}>
+                        <td colSpan="12" style={{ textAlign: "center" }}>
                           No data available
                         </td>
                       </tr>

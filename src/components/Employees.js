@@ -11,7 +11,7 @@ import "../dist/css/tabler-payments.min.css?1684106062";
 import "../dist/css/tabler-vendors.min.css?1684106062";
 import "../dist/css/demo.min.css?1684106062";
 import { IconTrash } from "@tabler/icons-react";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
 // import EmployeeTable from "./EmployeeTable";
 import {
   Button,
@@ -68,6 +68,7 @@ function Employees({ onEyeButtonClick }) {
   const [jdate, setJdate] = useState(null);
   const [designation, setDesignation] = useState("");
   const [otherdesignation, setotherDesignation] = useState("");
+  const [companyData, setCompanyData] = useState([]);
 
   const [open, openchange] = useState(false);
 
@@ -100,18 +101,16 @@ function Employees({ onEyeButtonClick }) {
 
     setFilteredData(filtered);
   };
-  const [companyData, setCompanyData] = useState([]);
-  const handleUpdateClick = (id , echangename) => {
+
+  const handleUpdateClick = (id, echangename) => {
     // Set the selected data ID and set update mode to true
     setSelectedDataId(id);
     setIsUpdateMode(true);
-   setCompanyData(cdata.find((item)=> item.ename === echangename)) 
-  
+    setCompanyData(cdata.filter((item) => item.ename === echangename));
 
     // Find the selected data object
     const selectedData = data.find((item) => item._id === id);
     console.log(echangename);
-
 
     // Update the form data with the selected data values
     setEmail(selectedData.email);
@@ -202,22 +201,37 @@ function Employees({ onEyeButtonClick }) {
           `http://localhost:3001/einfo/${selectedDataId}`,
           dataToSend
         );
+        
 
-        // if(companyData.length!==0){
-        //   companyData.map(async(item)=>(
-        //     await axios.put(
-        //       `http://localhost:3001/newcompanyname/${item._id}`,
-        //       ename
-        //     )
-        //   ))
-        // }
+        if (companyData && companyData.length !== 0) {
+          // Assuming ename is part of dataToSend
+          const { ename } = dataToSend;
+          try {
+         
+
+            // Update companyData in the second database
+            await Promise.all(
+              companyData.map(async (item) => {
+                await axios.put(
+                  `http://localhost:3001/newcompanyname/${item._id}`,
+                  { ename }
+                );
+                console.log(`Updated ename for ${item._id}`);
+              })
+            );
+        
+            console.log('All ename updates completed successfully');
+          } catch (error) {
+            console.error('Error updating enames:', error.message);
+            // Handle the error as needed
+          }
+        }
+        
         Swal.fire({
           title: "Data Updated!",
           text: "You have successfully updated the data!",
-          icon: "success"
+          icon: "success",
         });
-       
-
       } else {
         await axios.post("http://localhost:3001/einfo", dataToSend);
       }
@@ -249,7 +263,7 @@ function Employees({ onEyeButtonClick }) {
   const closepopup = () => {
     openchange(false);
   };
-
+console.log(companyData);
   //   cInfo:{
   //     "Company Name": referenceId + "company",
 
@@ -540,9 +554,9 @@ function Employees({ onEyeButtonClick }) {
       >
         <div className="container-xl">
           <div className="card">
-            <div style={{padding:"0px"}} className="card-body">
+            <div style={{ padding: "0px" }} className="card-body">
               <div id="table-default">
-                <table style={{margin:"0px"}} className="table">
+                <table style={{ margin: "0px" }} className="table">
                   <thead>
                     <tr>
                       <th>
@@ -587,12 +601,12 @@ function Employees({ onEyeButtonClick }) {
                   </thead>
                   {filteredData.length == 0 ? (
                     <tbody>
-                    <tr>
-                      <td colSpan="10" style={{ textAlign: "center" }}>
-                        No data available
-                      </td>
-                    </tr>
-                  </tbody>
+                      <tr>
+                        <td colSpan="10" style={{ textAlign: "center" }}>
+                          No data available
+                        </td>
+                      </tr>
+                    </tbody>
                   ) : (
                     filteredData.map((item, index) => (
                       <tbody className="table-tbody">
@@ -602,9 +616,13 @@ function Employees({ onEyeButtonClick }) {
                           <td className="sort-city pad">{item.number}</td>
                           <td className="sort-type pad">{item.email}</td>
                           <td className="sort-type pad">
-                            {formatDate(item.jdate)}</td>
+                            {formatDate(item.jdate)}
+                          </td>
                           <td className="sort-type pad">{item.designation}</td>
-                          <td style={{justifyContent:"center"}} className="sort-score pad d-flex text-align-center">
+                          <td
+                            style={{ justifyContent: "center" }}
+                            className="sort-score pad d-flex text-align-center"
+                          >
                             <div className="icons-btn">
                               <IconTrash
                                 onClick={() => handleDeleteClick(item._id)}
@@ -615,17 +633,14 @@ function Employees({ onEyeButtonClick }) {
                               <ModeEditIcon
                                 onClick={() => {
                                   functionopenpopup();
-                                  handleUpdateClick(item._id , item.ename);
+                                  handleUpdateClick(item._id, item.ename);
                                 }}
                               >
                                 Update
                               </ModeEditIcon>
                             </div>
                             <div className="icons-btn">
-                              <Link
-                                
-                                to={`/employees/${item._id}`}
-                              >
+                              <Link to={`/employees/${item._id}`}>
                                 <IconEye />
                               </Link>
                             </div>

@@ -23,7 +23,7 @@ function Navbar() {
                 >
                   <Link
                     style={{ textDecoration: "none", color: "black" }}
-                    to="/"
+                    to="/home"
                   >
                     <a className="nav-link" href="./">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
