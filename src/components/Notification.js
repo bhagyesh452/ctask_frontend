@@ -12,9 +12,10 @@ import PersonAdd from '@mui/icons-material/PersonAdd';
 import Settings from '@mui/icons-material/Settings';
 import Logout from '@mui/icons-material/Logout';
 import Bell from './Bell';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useNavigate } from 'react-router-dom';
 
-export default function Notification({belldata , bellGdata}) {
+export default function Notification() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
@@ -45,7 +46,7 @@ const navigate = useNavigate();
   return (
     <React.Fragment>
       <Box sx={{ display: 'flex', alignItems: 'center', textAlign: 'center' }}>
-       <Bell data={belldata} gdata = {bellGdata}/>
+       
         <Tooltip title="Account settings">
           <IconButton
             onClick={handleClick}
@@ -55,7 +56,7 @@ const navigate = useNavigate();
             aria-haspopup="true"
             aria-expanded={open ? 'true' : undefined}
           >
-            <Avatar sx={{ width: 32, height: 32 }}>M</Avatar>
+            <MoreVertIcon/>
           </IconButton>
         </Tooltip>
       </Box>

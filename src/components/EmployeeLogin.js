@@ -54,7 +54,7 @@ function EmployeeLogin({ setnewToken }) {
       setnewToken(newtoken);
       localStorage.setItem("newtoken", newtoken);
       localStorage.setItem("userId", userId);
-      window.location.replace(`http://localhost:3000/employee-data/${userId}`);
+      window.location.replace(`http://localhost:3002/employee-data/${userId}`);
     } catch (error) {
       console.error("Login failed:", error.message);
       setErrorMessage("Incorrect Credentials");

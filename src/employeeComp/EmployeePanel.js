@@ -9,6 +9,7 @@ import { IconButton } from "@mui/material";
 import "./panel.css";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import Swal from "sweetalert2";
 
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -313,11 +314,11 @@ function EmployeePanel() {
         );
   
         console.log("Data sent successfully:", response.data);
-        alert("Request sent!");
+        Swal.fire("Request sent!");
         closepopup();
       } catch (error) {
         console.error("Error:", error.message);
-        alert("Please try again later!");
+        Swal.fire("Please try again later!");
       }
 
     }
@@ -333,11 +334,11 @@ function EmployeePanel() {
         );
   
         console.log("Data sent successfully:", response.data);
-        alert("Request sent!");
+        Swal.fire("Request sent!");
         closepopup();
       } catch (error) {
         console.error("Error:", error.message);
-        alert("Please try again later!");
+        Swal.fire("Please try again later!");
       }
     }
   };
