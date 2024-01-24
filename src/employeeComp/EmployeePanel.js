@@ -300,7 +300,7 @@ function EmployeePanel() {
   const handleSubmit = async (event) => {
     const name = data.ename;
     event.preventDefault();
-    if(selectedOption==="notgeneral"){
+    if (selectedOption === "notgeneral") {
       try {
         // Make API call using Axios
         const response = await axios.post(
@@ -312,7 +312,7 @@ function EmployeePanel() {
             name,
           }
         );
-  
+
         console.log("Data sent successfully:", response.data);
         Swal.fire("Request sent!");
         closepopup();
@@ -320,9 +320,7 @@ function EmployeePanel() {
         console.error("Error:", error.message);
         Swal.fire("Please try again later!");
       }
-
-    }
-    else{
+    } else {
       try {
         // Make API call using Axios
         const response = await axios.post(
@@ -332,7 +330,7 @@ function EmployeePanel() {
             name,
           }
         );
-  
+
         console.log("Data sent successfully:", response.data);
         Swal.fire("Request sent!");
         closepopup();
@@ -352,7 +350,7 @@ function EmployeePanel() {
   return (
     <div>
       <Header name={data.ename} designation={data.designation} />
-      <EmpNav />
+      <EmpNav userId={userId} />
 
       {/* Dialog box for Request Data */}
 
@@ -365,103 +363,113 @@ function EmployeePanel() {
         </DialogTitle>
         <DialogContent>
           <div className="form-control">
-          <form onSubmit={handleSubmit} style={{ textAlign: "center", maxWidth: "400px", margin: "auto" }}>
-          <div className="con2 d-flex">
-                  <div
-                    style={{ margin: "10px 10px 0px 0px" }}
-                    className="direct form-control"
-                  >
-                    <input
-                      type="radio"
-                      id="general"
-                      value="general"
-                      checked={selectedOption === "general"}
-                      onChange={handleOptionChange}
-                    />
-                    <label htmlFor="general">General Data</label>
-                  </div>
-                  <div
-                    style={{ margin: "10px 0px 0px 10px" }}
-                    className="indirect form-control"
-                  >
-                    <input
-                      type="radio"
-                      id="notgeneral"
-                      value="notgeneral"
-                      checked={selectedOption === "notgeneral"}
-                      onChange={handleOptionChange}
-                    />
-                    <label htmlFor="notgeneral">Manual Data</label>
-                  </div>
+            <form
+              onSubmit={handleSubmit}
+              style={{ textAlign: "center", maxWidth: "400px", margin: "auto" }}
+            >
+              <div className="con2 d-flex">
+                <div
+                  style={{ margin: "10px 10px 0px 0px" }}
+                  className="direct form-control"
+                >
+                  <input
+                    type="radio"
+                    id="general"
+                    value="general"
+                    checked={selectedOption === "general"}
+                    onChange={handleOptionChange}
+                  />
+                  <label htmlFor="general">General Data</label>
                 </div>
-      {selectedOption === "notgeneral" ? (
-        <>
-  <div style={{ marginBottom: "15px" }}>
-    <label htmlFor="selectYear">Select Year :</label>
-    <select
-      id="selectYear"
-      name="selectYear"
-      value={selectedYear}
-      onChange={handleYearChange}
-      style={{ padding: "8px" }}
-    >
-      {[...Array(2025 - 1970).keys()].map((year) => (
-        <option key={year} value={1970 + year}>
-          {1970 + year}
-        </option>
-      ))}
-    </select>
-  </div>
+                <div
+                  style={{ margin: "10px 0px 0px 10px" }}
+                  className="indirect form-control"
+                >
+                  <input
+                    type="radio"
+                    id="notgeneral"
+                    value="notgeneral"
+                    checked={selectedOption === "notgeneral"}
+                    onChange={handleOptionChange}
+                  />
+                  <label htmlFor="notgeneral">Manual Data</label>
+                </div>
+              </div>
+              {selectedOption === "notgeneral" ? (
+                <>
+                  <div style={{ marginBottom: "15px" }}>
+                    <label htmlFor="selectYear">Select Year :</label>
+                    <select
+                      id="selectYear"
+                      name="selectYear"
+                      value={selectedYear}
+                      onChange={handleYearChange}
+                      style={{ padding: "8px" }}
+                    >
+                      {[...Array(2025 - 1970).keys()].map((year) => (
+                        <option key={year} value={1970 + year}>
+                          {1970 + year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-  <div style={{ marginBottom: "15px" }}>
-    <label>Company Type :</label>
-    <input
-      type="radio"
-      id="llp"
-      name="companyType"
-      value="LLP"
-      checked={companyType === "LLP"}
-      onChange={handleCompanyTypeChange}
-      style={{ marginRight: "5px" }}
-    />
-    <label htmlFor="llp" style={{ marginRight: "15px" }}>LLP</label>
-    <input
-      type="radio"
-      id="pvtLtd"
-      name="companyType"
-      value="PVT LTD"
-      checked={companyType === "PVT LTD"}
-      onChange={handleCompanyTypeChange}
-      style={{ marginRight: "5px" }}
-    />
-    <label htmlFor="pvtLtd">PVT LTD</label>
-  </div>
-        </>
-      ): (
-        <div>
+                  <div style={{ marginBottom: "15px" }}>
+                    <label>Company Type :</label>
+                    <input
+                      type="radio"
+                      id="llp"
+                      name="companyType"
+                      value="LLP"
+                      checked={companyType === "LLP"}
+                      onChange={handleCompanyTypeChange}
+                      style={{ marginRight: "5px" }}
+                    />
+                    <label htmlFor="llp" style={{ marginRight: "15px" }}>
+                      LLP
+                    </label>
+                    <input
+                      type="radio"
+                      id="pvtLtd"
+                      name="companyType"
+                      value="PVT LTD"
+                      checked={companyType === "PVT LTD"}
+                      onChange={handleCompanyTypeChange}
+                      style={{ marginRight: "5px" }}
+                    />
+                    <label htmlFor="pvtLtd">PVT LTD</label>
+                  </div>
+                </>
+              ) : (
+                <div></div>
+              )}
 
-        </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label htmlFor="numberOfData">Number of Data :</label>
+                <input
+                  type="number"
+                  id="numberOfData"
+                  name="numberOfData"
+                  value={numberOfData}
+                  onChange={handleNumberOfDataChange}
+                  min="1"
+                  required
+                  style={{ padding: "8px" }}
+                />
+              </div>
 
-      )}
-  
-
-  <div style={{ marginBottom: "15px" }}>
-    <label htmlFor="numberOfData">Number of Data :</label>
-    <input
-      type="number"
-      id="numberOfData"
-      name="numberOfData"
-      value={numberOfData}
-      onChange={handleNumberOfDataChange}
-      min="1"
-      required
-      style={{ padding: "8px" }}
-    />
-  </div>
-
-  <button type="submit" style={{ padding: "10px 20px", background: "#4CAF50", color: "white", border: "none" }}>Submit</button>
-</form>
-
+              <button
+                type="submit"
+                style={{
+                  padding: "10px 20px",
+                  background: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                }}
+              >
+                Submit
+              </button>
+            </form>
           </div>
         </DialogContent>
       </Dialog>
