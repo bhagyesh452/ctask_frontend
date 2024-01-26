@@ -12,6 +12,39 @@ import CloseIcon from "@mui/icons-material/Close";
 
 function ConveertedLeads() {
   const [data, setData] = useState([]);
+  const [unames, setUnames] = useState([]);
+  const [paymentCount, setpaymentCount] = useState(0);
+  const [otherName, setotherName] = useState("");
+  const [leadData, setLeadData] = useState({
+    // Initialize properties with default values if needed
+    bdmName: "",
+    bdmEmail: "",
+    bdmType: "Close by",
+    supportedBy: false,
+    bookingDate: null,
+    caCase: "No",
+    caNumber: 0,
+    caEmail: "",
+    caCommission: "",
+    companyName: "",
+    contactNumber: 0,
+    companyEmail: "",
+    services: "",
+    originalTotalPayment: 0,
+    totalPayment: 0,
+    paymentTerms: "Full Advanced",
+    paymentMethod: "",
+    firstPayment: 0,
+    secondPayment: 0,
+    thirdPayment: 0,
+    fourthPayment: 0,
+    paymentReciept: null,
+    bookingSource: "",
+    cPANorGSTnum: 0,
+    incoDate: null,
+    extraNotes: "",
+    otherDocs: null,
+  });
 
   const { userId } = useParams();
   const fetchData = async () => {
@@ -20,6 +53,8 @@ function ConveertedLeads() {
 
       // Set the retrieved data in the state
       const tempData = response.data;
+      setUnames(tempData);
+
       const userData = tempData.find((item) => item._id === userId);
 
       setData(userData);
@@ -31,7 +66,6 @@ function ConveertedLeads() {
   useEffect(() => {
     fetchData();
   }, [userId]);
-  console.log(data);
 
   const [open, openchange] = useState(false);
   const functionopenpopup = () => {
@@ -41,15 +75,70 @@ function ConveertedLeads() {
     openchange(false);
   };
 
+  const handleSubmitForm = async () => {
+    const formData = new FormData();
+   formData.append("bdmName", leadData.bdmName);
+formData.append("bdmEmail", leadData.bdmEmail);
+formData.append("bdmType", leadData.bdmType);
+formData.append("supportedBy", leadData.supportedBy);
+formData.append("bookingDate", leadData.bookingDate);
+formData.append("caCase", leadData.caCase);
+formData.append("caNumber", leadData.caNumber);
+formData.append("caEmail", leadData.caEmail);
+formData.append("caCommission", leadData.caCommission);
+formData.append("companyName", leadData.companyName);
+formData.append("contactNumber", leadData.contactNumber);
+formData.append("companyEmail", leadData.companyEmail);
+formData.append("services", leadData.services);
+formData.append("originalTotalPayment", leadData.originalTotalPayment);
+formData.append("totalPayment", leadData.totalPayment);
+formData.append("paymentTerms", leadData.paymentTerms);
+formData.append("paymentMethod", leadData.paymentMethod);
+formData.append("firstPayment", (leadData.firstPayment * leadData.totalPayment) /
+100);
+formData.append("secondPayment", (leadData.secondPayment * leadData.totalPayment) /
+100);
+formData.append("thirdPayment", (leadData.thirdPayment * leadData.totalPayment) /
+100);
+formData.append("fourthPayment", (leadData.fourthPayment * leadData.totalPayment) /
+100);
+formData.append("bookingSource", leadData.bookingSource);
+formData.append("cPANorGSTnum", leadData.cPANorGSTnum);
+formData.append("incoDate", leadData.incoDate);
+formData.append("extraNotes", leadData.extraNotes);
+    if (leadData.otherDocs) {
+      for (let i = 0; i < leadData.otherDocs.length; i++) {
+        formData.append("otherDocs", leadData.otherDocs[i]);
+      }
+    }
+    formData.append('paymentReceipt', leadData.paymentReciept);
+    
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/lead-form",
+        formData
+      );
+
+      closepopup();
+      Swal.fire("Data sent Succefully!");
+    } catch (error) {
+      Swal.fire("Error!");
+      console.error("Login failed:", error.message);
+
+      // setErrorMessage("Incorrect Credentials!");
+    }
+  };
+
   return (
     <div>
       {/* Dialog box Content */}
 
       <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
         <div class="col-md-12">
-          <form class="card">
-            <div class="card-header">
-              <h3 class="card-title">Basic form</h3>
+          <div class="card">
+            <div class="card-header d-flex justify-content-between">
+              <h3 class="card-title">Lead Form</h3>
               <IconButton onClick={closepopup} style={{ float: "right" }}>
                 <CloseIcon color="primary"></CloseIcon>
               </IconButton>{" "}
@@ -57,205 +146,749 @@ function ConveertedLeads() {
             <div class="card-body">
               <div className="BDM-Name">
                 <label class="form-label">BDM Name</label>
-                <div className="nameSection d-flex">
-                  <div className="name">
+                <div className="nameSection row mb-3">
+                  <div className="name col">
                     <div className="choose-option">
                       <select
                         type="text"
-                        class="form-select"
+                        className="form-select"
                         id="select-users"
-                        value=""
+                        value={leadData.bdmName}
+                        onChange={(e) => {
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            bdmName: e.target.value,
+                          }));
+                        }}
                       >
-                        <option value="1">Chuck Tesla</option>
-                        <option value="2">Elon Musk</option>
-                        <option value="3">Paweł Kuna</option>
-                        <option value="4">Nikola Tesla</option>
-                        <option value="5">Other</option>
+                        <option value="" disabled selected>
+                          Please select BDE Name
+                        </option>
+                        {unames &&
+                          unames.map((names) => (
+                            <option value={names.ename}>{names.ename}</option>
+                          ))}
+
+                        <option value="other">Other</option>
                       </select>
                     </div>
-                    <div className="closeby">
-                      <div class="mb-3">
-                        <div>
-                          <label class="form-check form-check-inline">
-                            <input
-                              class="form-check-input"
-                              type="radio"
-                              name="radios-inline"
-                              checked
-                            />
-                            <span class="form-check-label">Close By</span>
-                          </label>
-                          <label class="form-check form-check-inline">
-                            <input
-                              class="form-check-input"
-                              type="radio"
-                              name="radios-inline"
-                            />
-                            <span class="form-check-label">Supported By</span>
-                          </label>
-                        </div>
-                      </div>
-                    </div>
                   </div>
-                  <div className="othername">
+                  {leadData.bdmName === "other" && (
+                    <div className="othername col">
+                      <input
+                        type="text"
+                        name="othername"
+                        id="othername"
+                        placeholder="Enter BDE Name"
+                        className="form-control"
+                        onChange={(e) => {
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            bdmName: e.target.value,
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="email col">
                     <input
                       type="text"
                       name="othername"
                       id="othername"
-                      placeholder="Enter BDE Name"
+                      placeholder="Enter BDE Email Address"
                       className="form-control"
+                      value={leadData.bdmEmail}
+                      onChange={(e) => {
+                        setLeadData((prevLeadData) => ({
+                          ...prevLeadData,
+                          bdmEmail: e.target.value,
+                        }));
+                      }}
                     />
                   </div>
-                  <div className="email">
-                    <select
-                      type="text"
-                      class="form-select"
-                      id="select-emails"
-                      value=""
-                    >
-                      <option value="1">Chuck Tesla</option>
-                      <option value="2">Elon Musk</option>
-                      <option value="3">Paweł Kuna</option>
-                      <option value="4">Nikola Tesla</option>
-                      <option value="5">Other</option>
-                    </select>
+                </div>
+                <div className="closeby">
+                  <div class="mb-3">
+                    <div className="d-flex">
+                      <label class="form-check form-check-inline">
+                        <input
+                          class="form-check-input"
+                          type="radio"
+                          name="close-by"
+                          onChange={(e) => {
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              bdmType: "Close by",
+                            }));
+                          }}
+                          checked
+                        />
+                        <span class="form-check-label">Close By</span>
+                      </label>
+                      <label class="form-check form-check-inline">
+                        <input
+                          class="form-check-input"
+                          type="radio"
+                          name="close-by"
+                          onChange={(e) => {
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              bdmType: "Supported by",
+                            }));
+                          }}
+                        />
+                        <span class="form-check-label">Supported By</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="booking-date">
-                <div className="col-lg-6">
-                  <div className="mb-3">
-                    <label className="form-label">Booking Date</label>
-                    <input type="date" className="form-control" />
-                  </div>
-                </div>
+              <div className="booking-date mb-3">
+                <label className="form-label">Booking Date</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      bookingDate: e.target.value,
+                    }));
+                  }}
+                />
               </div>
               <div className="CA-case">
                 <label class="form-label">CA Case</label>
                 <div className="check-ca-case">
                   <div class="mb-3">
                     <div>
-                      <label class="form-check form-check-inline">
+                      <label className="form-check form-check-inline">
                         <input
-                          class="form-check-input"
+                          className="form-check-input"
                           type="radio"
-                          name="radios-inline"
-                          checked
+                          name="ca-case"
+                          onChange={(e) => {
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              caCase: e.target.value, // Set the value based on the selected radio button
+                            }));
+                          }}
+                          value="Yes" // Set the value attribute for "Yes"
+                          checked={leadData.caCase === "Yes"} // Check condition based on state
                         />
-                        <span class="form-check-label">Yes</span>
+                        <span className="form-check-label">Yes</span>
                       </label>
-                      <label class="form-check form-check-inline">
+                      <label className="form-check form-check-inline">
                         <input
-                          class="form-check-input"
+                          className="form-check-input"
                           type="radio"
-                          name="radios-inline"
+                          name="ca-case"
+                          onChange={(e) => {
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              caCase: e.target.value, // Set the value based on the selected radio button
+                            }));
+                          }}
+                          value="No" // Set the value attribute for "No"
+                          checked={leadData.caCase === "No"} // Check condition based on state
                         />
-                        <span class="form-check-label">No</span>
+                        <span className="form-check-label">No</span>
                       </label>
                     </div>
                   </div>
                 </div>
-                <div className="nameSection d-flex">
-                  <div className="othername">
-                    <input
-                      type="text"
-                      name="othername"
-                      id="othername"
-                      placeholder="Enter CA's Name"
-                      className="form-control"
-                    />
-                  </div>
-                  <div className="closeby">
-                    <div className="othername">
+                {leadData.caCase === "Yes" && (
+                  <div className="ca-details d-flex">
+                    <div className="ca-number">
+                      <input
+                        type="number"
+                        name="ca-number"
+                        id="ca-number"
+                        placeholder="Enter CA's Number"
+                        className="form-control"
+                        onChange={(e) => {
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            caNumber: e.target.value, // Set the value based on the selected radio button
+                          }));
+                        }}
+                      />
+                    </div>
+                    <div className="ca-email">
+                      <div className="ca-email2">
+                        <input
+                          type="text"
+                          name="ca-email"
+                          id="ca-email"
+                          placeholder="Enter CA's Email Address"
+                          className="form-control"
+                          onChange={(e) => {
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              caEmail: e.target.value, // Set the value based on the selected radio button
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="ca-commision">
                       <input
                         type="text"
-                        name="othername"
-                        id="othername"
-                        placeholder="Enter CA's Email Address"
+                        name="ca-commision"
+                        id="ca-commision"
+                        placeholder="Enter CA's Commision- If any"
                         className="form-control"
+                        onChange={(e) => {
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            caCommission: e.target.value, // Set the value based on the selected radio button
+                          }));
+                        }}
                       />
                     </div>
                   </div>
-
-                  <div className="othername">
-                    <input
-                      type="text"
-                      name="othername"
-                      id="othername"
-                      placeholder="Enter CA's Commision- If any"
-                      className="form-control"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
-              <div className="company-name">
-                <label class="form-label">
-                  Enter Company's Name
-                </label>
+              <div className="company-name mb-3">
+                <label class="form-label">Enter Company's Name</label>
                 <input
                   type="text"
-                  name="othername"
-                  id="othername"
+                  name="company-name"
+                  id="company-name"
                   placeholder="Enter Company Name"
                   className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      companyName: e.target.value, // Set the value based on the selected radio button
+                    }));
+                  }}
                 />
               </div>
-              <div className="company-contact">
-                <label class="form-label">
-                  Enter Contact Number
-                </label>
+              <div className="company-contact mb-3">
+                <label class="form-label">Enter Contact Number</label>
                 <input
-                  type="text"
-                  name="othername"
-                  id="othername"
+                  type="number"
+                  name="company-contact"
+                  id="company-contact"
                   placeholder="Enter Contact Number"
                   className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      contactNumber: e.target.value, // Set the value based on the selected radio button
+                    }));
+                  }}
                 />
               </div>
-              <div className="company-email">
-                <label class="form-label">
-                  Enter Company's Email-ID
-                </label>
+              <div className="company-email mb-3">
+                <label class="form-label">Enter Company's Email-ID</label>
                 <input
                   type="text"
-                  name="othername"
-                  id="othername"
+                  name="company-email"
+                  id="company-email"
                   placeholder="Enter Company Email ID"
                   className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      companyEmail: e.target.value, // Set the value based on the selected radio button
+                    }));
+                  }}
                 />
               </div>
-              <div className="services">
-                <label class="form-label">
-                  Servies
-                </label>
+              <div className="services mb-3">
+                <label class="form-label">Services</label>
                 <input
                   type="text"
-                  name="othername"
-                  id="othername"
-                  placeholder="Enter Servies Name"
+                  name="services"
+                  id="services"
+                  placeholder="Enter Services Name"
                   className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      services: e.target.value, // Set the value based on the selected radio button
+                    }));
+                  }}
                 />
               </div>
-              {/* <div className="payment">
+              <div className="paymentGST mb-3">
+                <label class="form-label">Total Payment&nbsp;</label>
+                <input
+                  type="number"
+                  name="total-payment"
+                  id="total-payment"
+                  placeholder="Enter Total Payment with GST"
+                  className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      originalTotalPayment: e.target.value,
+                      totalPayment: e.target.value, // Set the value based on the selected radio button
+                    }));
+                  }}
+                />
+                <div className="form-check">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    value=""
+                    id="flexCheckChecked"
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        originalTotalPayment: isChecked
+                          ? prevLeadData.totalPayment
+                          : prevLeadData.originalTotalPayment,
+                        totalPayment: isChecked
+                          ? prevLeadData.totalPayment * 1.18
+                          : prevLeadData.originalTotalPayment,
+                      }));
+                    }}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="flexCheckChecked"
+                  >
+                    Include GST (18%)
+                  </label>
+                </div>
+              </div>
+              <div className="payment-withGST">
                 <label class="form-label">
-                  Total Payment
+                  Total Payment&nbsp;
+                  <span style={{ fontWeight: "bold" }}>INC. GST</span>
+                </label>
+                <div className="form-control">{leadData.totalPayment}</div>
+              </div>
+              <div className="payment-terms">
+                <label className="form-label">Payment Terms</label>
+                <div className="mb-3">
+                  <div className="row">
+                    <label className="form-check form-check-inline col">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="radios-inline"
+                        value="Full Advanced"
+                        checked={leadData.paymentTerms === "Full Advanced"}
+                        onChange={(e) => {
+                          setpaymentCount(1);
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            paymentTerms: e.target.value, // Set the value based on the selected radio button
+                          }));
+                        }}
+                      />
+                      <span className="form-check-label">Full Advanced</span>
+                    </label>
+                    <label className="form-check form-check-inline col">
+                      <input
+                        className="form-check-input"
+                        type="radio"
+                        name="radios-inline"
+                        value="two-part"
+                        checked={leadData.paymentTerms === "two-part"}
+                        onChange={(e) => {
+                          setpaymentCount(2);
+
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            paymentTerms: e.target.value,
+                            secondPayment: 50,
+                            // Set the value based on the selected radio button
+                          }));
+                        }}
+                      />
+                      <span className="form-check-label">Two Part Payment</span>
+                    </label>
+                  </div>
+                </div>
+                {leadData.paymentTerms === "two-part" && (
+                  <>
+                    <div className="row more-payments">
+                      <div className="col first-payment">
+                        <input
+                          type="number"
+                          name="first-payment"
+                          id="first-payment"
+                          value={leadData.firstPayment}
+                          placeholder="First Payment"
+                          className="form-control"
+                          onChange={(e) => {
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              firstPayment: e.target.value
+                                .replace(/\D/g, "")
+                                .slice(0, 2),
+                            }));
+                          }}
+                        />
+                      </div>
+                      {paymentCount === 2 && (
+                        <div className="col second-payment d-flex">
+                          <input
+                            type="number"
+                            name="second-payment"
+                            id="second-payment"
+                            value={leadData.secondPayment}
+                            placeholder="Second Payment"
+                            className="form-control"
+                            onChange={(e) => {
+                              setLeadData((prevLeadData) => ({
+                                ...prevLeadData,
+                                secondPayment: e.target.value, // Set the value based on the selected radio button
+                              }));
+                            }}
+                          />
+                          <button
+                            onClick={() => {
+                              setpaymentCount(3);
+                              leadData.thirdPayment =
+                                100 -
+                                leadData.firstPayment -
+                                leadData.secondPayment;
+                            }}
+                            type="button"
+                            className="btn btn-primary"
+                          >
+                            <i className="fas fa-plus"></i> +{" "}
+                          </button>
+                        </div>
+                      )}
+                      {paymentCount === 3 && (
+                        <>
+                          <div className="col second-payment">
+                            <input
+                              type="number"
+                              name="second-payment"
+                              id="second-payment"
+                              value={leadData.secondPayment}
+                              placeholder="Second Payment"
+                              className="form-control"
+                              onChange={(e) => {
+                                setLeadData((prevLeadData) => ({
+                                  ...prevLeadData,
+                                  secondPayment: e.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, 2),
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className="col third-payment d-flex">
+                            <input
+                              type="number"
+                              name="third-payment"
+                              id="third-payment"
+                              value={leadData.thirdPayment}
+                              placeholder="Third Payment"
+                              className="form-control"
+                              onChange={(e) => {
+                                setLeadData((prevLeadData) => ({
+                                  ...prevLeadData,
+                                  thirdPayment: e.target.value,
+                                }));
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                setpaymentCount(4);
+                                leadData.fourthPayment =
+                                  100 -
+                                  leadData.firstPayment -
+                                  leadData.secondPayment -
+                                  leadData.thirdPayment;
+                              }}
+                              type="button"
+                              className="btn btn-primary"
+                            >
+                              <i className="fas fa-plus"></i> +{" "}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                      {paymentCount === 4 && (
+                        <>
+                          <div className="col second-payment">
+                            <input
+                              type="number"
+                              name="second-payment"
+                              id="second-payment"
+                              value={leadData.secondPayment}
+                              placeholder="Second Payment"
+                              className="form-control"
+                              onChange={(e) => {
+                                setLeadData((prevLeadData) => ({
+                                  ...prevLeadData,
+                                  secondPayment: e.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, 2),
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className="col third-payment">
+                            <input
+                              type="number"
+                              name="third-payment"
+                              id="third-payment"
+                              value={leadData.thirdPayment}
+                              placeholder="Thrid Payment"
+                              className="form-control"
+                              onChange={(e) => {
+                                setLeadData((prevLeadData) => ({
+                                  ...prevLeadData,
+                                  thirdPayment: e.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, 2),
+                                }));
+                              }}
+                            />
+                          </div>
+                          <div className="col fourth-payment d-flex">
+                            <input
+                              type="number"
+                              name="fourth-payment"
+                              id="fourth-payment"
+                              value={leadData.fourthPayment}
+                              placeholder="Fourth Payment"
+                              className="form-control"
+                              onChange={(e) => {
+                                setLeadData((prevLeadData) => ({
+                                  ...prevLeadData,
+                                  fourthPayment: e.target.value,
+                                }));
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                setpaymentCount(3);
+                              }}
+                              type="button"
+                              className="btn btn-primary"
+                            >
+                              <i className="fas fa-plus"></i> -{" "}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="details-payment row">
+                      <div className="details-payment-1 col">
+                        <label class="form-label">First Payment</label>
+                        <div className="form-control">
+                          {(leadData.firstPayment * leadData.totalPayment) /
+                            100}
+                        </div>
+                      </div>
+                      <div className="details-payment-2 col">
+                        <label class="form-label">Second Payment</label>
+                        <div className="form-control">
+                          {(leadData.secondPayment * leadData.totalPayment) /
+                            100}
+                        </div>
+                      </div>
+                      {paymentCount >= 3 && (
+                        <div className="details-payment-3 col">
+                          <label class="form-label">Third Payment</label>
+                          <div className="form-control">
+                            {(leadData.thirdPayment * leadData.totalPayment) /
+                              100}
+                          </div>
+                        </div>
+                      )}
+
+                      {paymentCount === 4 && (
+                        <div className="details-payment-4 col">
+                          <label class="form-label">Fourth Payment</label>
+                          <div className="form-control">
+                            {(leadData.fourthPayment * leadData.totalPayment) /
+                              100}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="payment-method mb-3">
+                <label className="form-label">Payment Method</label>
+                <select
+                  className="form-select mb-3"
+                  value={leadData.paymentMethod}
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      paymentMethod: e.target.value,
+                    }));
+                  }}
+                  id="select-emails"
+                >
+                  <option value="" disabled>
+                    Select Payment Option
+                  </option>
+                  <option value="ICICI Bank">ICICI Bank</option>
+                  <option value="SRK Seedfund(Non GST)/IDFC first Bank">
+                    SRK Seedfund(Non GST)/IDFC first Bank
+                  </option>
+                  <option value="STARTUP SAHAY SERVICES/ADVISORY(Non GST)/ IDFC First Bank">
+                    STARTUP SAHAY SERVICES/ADVISORY(Non GST)/ IDFC First Bank
+                  </option>
+                  <option value="Razorpay">Razorpay</option>
+                  <option value="PayU">PayU</option>
+                  <option value="Other">Other</option>
+                </select>
+                {leadData.paymentMethod === "Other" && (
+                  <input
+                    type="text"
+                    name="other-method"
+                    id="other-method"
+                    placeholder="Enter Payment Method "
+                    className="form-control "
+                  />
+                )}
+              </div>
+
+              <div className="payment-receipt">
+                <div class="mb-3">
+                  <label for="formFile" class="form-label">
+                    Payment Reciept
+                  </label>
+                  <input class="form-control" type="file" id="formFile"  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      paymentReciept: e.target.files[0],
+                    }));
+                  }} />
+                </div>
+              </div>
+              <div className="booking-source mb-3">
+                <label class="form-label">Booking Source</label>
+                <select
+                  type="text"
+                  class="form-select mb-3"
+                  id="select-emails"
+                  value={leadData.bookingSource}
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      bookingSource: e.target.value,
+                    }));
+                  }}
+                >
+                  <option value="" disabled>
+                    Select Booking Source
+                  </option>
+                  <option value="Excel Data">Excel Data</option>
+                  <option value="Insta Lead">Insta Lead</option>
+                  <option value="Reference">Reference</option>
+                  <option value="Existing Client">Existing Client</option>
+                  <option value="Lead By Saurav Sir">Lead By Saurav Sir</option>
+                  <option value="Other">Other</option>
+                </select>
+                {leadData.bookingSource === "Other" && (
+                  <input
+                    type="text"
+                    name="other-method"
+                    id="other-method"
+                    placeholder="Enter Booking Source"
+                    className="form-control "
+                  />
+                )}
+              </div>
+              <div className="cpan-or-gst mb-3">
+                <label class="form-label">Company Pan or GST Number</label>
+                <input
+                  type="number"
+                  name="panorGSTnumber"
+                  id="panorGSTnumber"
+                  placeholder="Enter Company's PAN/GST number "
+                  className="form-control"
+                  onChange={(e) => {
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      cPANorGSTnum: e.target.value,
+                    }));
+                  }}
+                />
+              </div>
+              <div className="cidate-or-extranotes row mb-3">
+                <div className="cidate col">
+                  <label className="form-label">
+                    Company Incorporation Date
+                  </label>
+                  <input
+                    onChange={(e) => {
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        incoDate: e.target.value,
+                      }));
+                    }}
+                    type="date"
+                    className="form-control"
+                  />
+                </div>
+                <div className="extra-notes col">
+                  <label class="form-label">Any Extra Notes</label>
+                  <input
+                    type="text"
+                    name="extraNotes"
+                    id="extraNotes"
+                    placeholder="Enter Company's PAN/GST number "
+                    className="form-control"
+                    onChange={(e) => {
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        extraNotes: e.target.value,
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="other-docs mb-3">
+                <label for="formFile" class="form-label">
+                  Any Other Documents
                 </label>
                 <input
-                  type="text"
-                  name="othername"
-                  id="othername"
-                  placeholder="Enter Total "
+                  onChange={(e) => {
+                    // Update the state with the selected files
+                    setLeadData((prevLeadData) => ({
+                      ...prevLeadData,
+                      otherDocs: [
+                        ...(prevLeadData.otherDocs || []),
+                        ...e.target.files,
+                      ],
+                    }));
+                  }}
                   className="form-control"
+                  type="file"
+                  id="other-docs"
+                  multiple
                 />
-              </div> */}
+                {leadData.otherDocs && leadData.otherDocs.length > 0 && (
+                  <ul>
+                    {leadData.otherDocs.map((file, index) => (
+                      <li key={index}>{file.name}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
             <div class="card-footer text-end">
-              <button type="submit" class="btn btn-primary">
+              <button
+                onClick={handleSubmitForm}
+                type="submit"
+                class="btn btn-primary"
+              >
                 Submit
               </button>
             </div>
-          </form>
+          </div>
         </div>
       </Dialog>
 
