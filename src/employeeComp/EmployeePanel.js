@@ -12,8 +12,11 @@ import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import Swal from "sweetalert2";
 
 import CloseIcon from "@mui/icons-material/Close";
+import Form from "../components/Form.jsx";
 
 function EmployeePanel() {
+  const [moreFilteredData, setmoreFilteredData] = useState([]);
+  const [dataStatus, setdataStatus] = useState("All");
   const [open, openchange] = useState(false);
   const [data, setData] = useState([]);
   const [employeeData, setEmployeeData] = useState([]);
@@ -50,10 +53,12 @@ function EmployeePanel() {
       const userData = tempData.find((item) => item._id === userId);
 
       setData(userData);
+      setmoreFilteredData(userData);
     } catch (error) {
       console.error("Error fetching data:", error.message);
     }
   };
+  const [moreEmpData, setmoreEmpData] = useState([])
 
   const fetchNewData = async () => {
     try {
@@ -61,6 +66,7 @@ function EmployeePanel() {
         `http://localhost:3001/api/employees/${data.ename}`
       );
       setEmployeeData(response.data);
+      setmoreEmpData(response.data);
     } catch (error) {
       console.error("Error fetching new data:", error);
     }
@@ -121,6 +127,9 @@ function EmployeePanel() {
 
   const filteredData = employeeData.filter((company) => {
     const fieldValue = company[selectedField];
+  
+
+ 
 
     if (selectedField === "State" && citySearch) {
       // Handle filtering by both State and City
@@ -165,10 +174,26 @@ function EmployeePanel() {
     }
   });
 
+  const [companyName, setCompanyName] = useState("");
+  const [companyEmail, setCompanyEmail] = useState("")
+  const [companyInco, setCompanyInco] = useState(null);
+  const [companyId, setCompanyId] = useState("");
+  const [formOpen, setFormOpen] = useState(false)
+
+  console.log(companyName,companyInco);
+
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleStatusChange = async (employeeId, newStatus) => {
-    console.log(employeeId, newStatus);
+  const handleStatusChange = async (employeeId, newStatus, cname,cemail,cindate) => {
+   
+    if(newStatus==="Matured"){
+        setCompanyName(cname);
+        setCompanyEmail(cemail);
+        setCompanyInco(cindate);
+        setCompanyId(employeeId)
+        setFormOpen(true)
+        return true;
+    }
 
     try {
       // Make an API call to update the employee status in the database
@@ -183,8 +208,11 @@ function EmployeePanel() {
       if (response.status === 200) {
         // If successful, update the employeeData state or fetch data again to reflect changes
         fetchData(); // Assuming fetchData is a function to fetch updated employee data
-
-        window.location.reload();
+        fetchNewData();
+        // if(newStatus==="Interested"){
+        //   setdataStatus("Interested");
+        //   setEmployeeData(moreEmpData.filter(obj => obj.Status === "Interested"))
+        // }
       } else {
         // Handle the case where the API call was not successful
         console.error("Failed to update status:", response.data.message);
@@ -341,7 +369,7 @@ function EmployeePanel() {
     }
   };
 
-  const [selectedOption, setSelectedOption] = useState("direct");
+  const [selectedOption, setSelectedOption] = useState("general");
 
   const handleOptionChange = (event) => {
     setSelectedOption(event.target.value);
@@ -353,129 +381,10 @@ function EmployeePanel() {
       <EmpNav userId={userId} />
 
       {/* Dialog box for Request Data */}
-
-      <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
-        <DialogTitle>
-          Request Data{" "}
-          <IconButton onClick={closepopup} style={{ float: "right" }}>
-            <CloseIcon color="primary"></CloseIcon>
-          </IconButton>{" "}
-        </DialogTitle>
-        <DialogContent>
-          <div className="form-control">
-            <form
-              onSubmit={handleSubmit}
-              style={{ textAlign: "center", maxWidth: "400px", margin: "auto" }}
-            >
-              <div className="con2 d-flex">
-                <div
-                  style={{ margin: "10px 10px 0px 0px" }}
-                  className="direct form-control"
-                >
-                  <input
-                    type="radio"
-                    id="general"
-                    value="general"
-                    checked={selectedOption === "general"}
-                    onChange={handleOptionChange}
-                  />
-                  <label htmlFor="general">General Data</label>
-                </div>
-                <div
-                  style={{ margin: "10px 0px 0px 10px" }}
-                  className="indirect form-control"
-                >
-                  <input
-                    type="radio"
-                    id="notgeneral"
-                    value="notgeneral"
-                    checked={selectedOption === "notgeneral"}
-                    onChange={handleOptionChange}
-                  />
-                  <label htmlFor="notgeneral">Manual Data</label>
-                </div>
-              </div>
-              {selectedOption === "notgeneral" ? (
-                <>
-                  <div style={{ marginBottom: "15px" }}>
-                    <label htmlFor="selectYear">Select Year :</label>
-                    <select
-                      id="selectYear"
-                      name="selectYear"
-                      value={selectedYear}
-                      onChange={handleYearChange}
-                      style={{ padding: "8px" }}
-                    >
-                      {[...Array(2025 - 1970).keys()].map((year) => (
-                        <option key={year} value={1970 + year}>
-                          {1970 + year}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={{ marginBottom: "15px" }}>
-                    <label>Company Type :</label>
-                    <input
-                      type="radio"
-                      id="llp"
-                      name="companyType"
-                      value="LLP"
-                      checked={companyType === "LLP"}
-                      onChange={handleCompanyTypeChange}
-                      style={{ marginRight: "5px" }}
-                    />
-                    <label htmlFor="llp" style={{ marginRight: "15px" }}>
-                      LLP
-                    </label>
-                    <input
-                      type="radio"
-                      id="pvtLtd"
-                      name="companyType"
-                      value="PVT LTD"
-                      checked={companyType === "PVT LTD"}
-                      onChange={handleCompanyTypeChange}
-                      style={{ marginRight: "5px" }}
-                    />
-                    <label htmlFor="pvtLtd">PVT LTD</label>
-                  </div>
-                </>
-              ) : (
-                <div></div>
-              )}
-
-              <div style={{ marginBottom: "15px" }}>
-                <label htmlFor="numberOfData">Number of Data :</label>
-                <input
-                  type="number"
-                  id="numberOfData"
-                  name="numberOfData"
-                  value={numberOfData}
-                  onChange={handleNumberOfDataChange}
-                  min="1"
-                  required
-                  style={{ padding: "8px" }}
-                />
-              </div>
-
-              <button
-                type="submit"
-                style={{
-                  padding: "10px 20px",
-                  background: "#4CAF50",
-                  color: "white",
-                  border: "none",
-                }}
-              >
-                Submit
-              </button>
-            </form>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Main Page Starts from here */}
-      <div className="page-wrapper">
+{
+  !formOpen ? (
+    <>
+    <div className="page-wrapper">
         <div className="page-header d-print-none">
           <div className="container-xl">
             <div className="row g-2 align-items-center">
@@ -727,7 +636,69 @@ function EmployeePanel() {
           className="page-body"
         >
           <div className="container-xl">
+          <div class="card-header">
+                <ul
+                  class="nav nav-tabs card-header-tabs nav-fill"
+                  data-bs-toggle="tabs"
+                >
+                  <li class="nav-item">
+                    <a
+                      href="#tabs-home-5"
+                      onClick={()=>{
+                        setdataStatus("All")
+                        setEmployeeData(moreEmpData)
+                      }}
+                      className={dataStatus==="All" ? "nav-link active" : "nav-link"}
+                      data-bs-toggle="tab"
+                    >
+                      General
+                    </a>
+                  </li>
+                  
+                
+                  <li class="nav-item">
+                    <a
+                      href="#tabs-activity-5"
+                      onClick={()=>{
+                        setdataStatus("Interested")
+                        setEmployeeData(moreEmpData.filter(obj => obj.Status === "Interested"))
+                      }}
+                      className={dataStatus==="Interested" ? "nav-link active" : "nav-link"}
+                      data-bs-toggle="tab"
+                    >
+                     Interested
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a
+                      href="#tabs-activity-5"
+                      onClick={()=>{
+                        setdataStatus("Matured")
+                        setEmployeeData(moreEmpData.filter(obj => obj.Status === "Matured"))
+                      }}
+                      className={dataStatus==="Matured" ? "nav-link active" : "nav-link"}
+                      data-bs-toggle="tab"
+                    >
+                     Matured
+                    </a>
+                  </li>
+                  <li class="nav-item">
+                    <a
+                      href="#tabs-activity-5"
+                      onClick={()=>{
+                        setdataStatus("NotInterested")
+                        setEmployeeData(moreEmpData.filter(obj => obj.Status === "Not Interested" || obj.Status === "Junk"))
+                      }}
+                      className={dataStatus==="NotInterested" ? "nav-link active" : "nav-link"}
+                      data-bs-toggle="tab"
+                    >
+                     Not-Interested
+                    </a>
+                  </li>
+                </ul>
+              </div>
             <div className="card">
+              
               <div className="card-body p-0">
                 <div style={{ overflowX: "auto" }}>
                   <table
@@ -767,7 +738,7 @@ function EmployeePanel() {
                     {currentData.length === 0 ? (
                       <tbody>
                         <tr>
-                          <td colSpan="10" style={{ textAlign: "center" }}>
+                          <td colSpan="10" style={{ textAlign: "center"}}>
                             No data available
                           </td>
                         </tr>
@@ -817,7 +788,11 @@ function EmployeePanel() {
                                 onChange={(e) =>
                                   handleStatusChange(
                                     company._id,
-                                    e.target.value
+                                    e.target.value,
+                                    company["Company Name"],
+                                    company["Company Email"],
+                                    company["Company Incorporation Date  "]
+
                                   )
                                 }
                               >
@@ -828,6 +803,7 @@ function EmployeePanel() {
                                 </option>
                                 <option value="Junk">Junk</option>
                                 <option value="Interested">Interested</option>
+                                <option value="Matured">Matured</option>
                                 <option value="Not Interested">
                                   Not Interested
                                 </option>
@@ -863,7 +839,7 @@ function EmployeePanel() {
                                 style={{
                                   padding: "5px",
                                   fontSize: "12px",
-                                  backgroundColor: "green",
+                                  backgroundColor: "#ffb900 ",
                                   // transition: "background-color 0.3s ease", // Smooth transition effect
                                   ":hover": {
                                     backgroundColor: "lightgreen !important", // Background color when hovered
@@ -880,14 +856,14 @@ function EmployeePanel() {
                     )}
                   </table>
                 </div>
-                <div
+                {currentData.length!==0 && <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     margin: "10px",
                   }}
                   className="pagination"
-                >
+                  >
                   <IconButton
                     onClick={() =>
                       setCurrentPage((prevPage) => Math.max(prevPage - 1, 0))
@@ -917,12 +893,228 @@ function EmployeePanel() {
                   >
                     <IconChevronRight />
                   </IconButton>
-                </div>
+                </div>}
               </div>
             </div>
           </div>
         </div>
       </div>
+    
+    </>
+  ) : (
+    <>
+    <div className="page-wrapper">
+        <div className="page-header d-print-none">
+          <div
+            style={{ justifyContent: "space-between" }}
+            className="container-xl d-flex"
+          >
+            <div className="row g-2 align-items-center">
+              <div className="col">
+                {/* <!-- Page pre-title --> */}
+                <h2 className="page-title">
+                  Leadform
+                </h2>
+              </div>
+            </div>
+            <div className="request">
+             
+                <div className="btn-list">
+                <button
+                  onClick={() => {
+                    setFormOpen(false);
+                  }}
+                  className="btn btn-primary d-none d-sm-inline-block"
+                >
+                  Back
+                </button>
+                <a
+                  href="#"
+                  className="btn btn-primary d-sm-none btn-icon"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modal-report"
+                  aria-label="Create new report"
+                >
+                  {/* <!-- Download SVG icon from http://tabler-icons.io/i/plus --> */}
+                </a>
+              </div>
+             
+              
+            </div>
+          </div>
+        </div>
+        <div
+          onCopy={(e) => {
+            e.preventDefault();
+          }}
+          className="page-body"
+        >
+          <div className="container-xl">
+            <Form matured={true} companysId = {companyId} companysName = {companyName} companysEmail={companyEmail} companysInco={companyInco} />
+          </div>
+        </div>
+      </div>
+    </>
+  )
+}
+      <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
+        <DialogTitle>
+          Request Data{" "}
+          <IconButton onClick={closepopup} style={{ float: "right" }}>
+            <CloseIcon color="primary"></CloseIcon>
+          </IconButton>{" "}
+        </DialogTitle>
+        <DialogContent>
+          <div className="container">
+            <form
+              onSubmit={handleSubmit}
+              
+            >
+              
+              <div className="con2 row mb-3">
+                  <div
+                    style={
+                      selectedOption === "general"
+                        ? {
+                            backgroundColor: "#ffb900",
+                            margin: "10px 10px 0px 0px",
+                            cursor: "pointer",
+                            color:"white"
+                          }
+                        : {
+                            backgroundColor: "white",
+                            margin: "10px 10px 0px 0px",
+                            cursor: "pointer",
+                          }
+                    }
+                    onClick={() => {
+                      setSelectedOption("general");
+                    }}
+                    className="direct form-control col"
+                  >
+                    <input
+                      type="radio"
+                      id="general"
+                      value="general"
+                      style={{
+                        display: "none",
+                      }}
+                      checked={selectedOption === "general"}
+                      onChange={handleOptionChange}
+                    />
+                    <label htmlFor="general">General Data</label>
+                  </div>
+                  <div
+                    style={
+                      selectedOption === "notgeneral"
+                        ? {
+                            backgroundColor: "#ffb900",
+                            margin: "10px 0px 0px 0px",
+                            cursor: "pointer",
+                            color:"white"
+                          }
+                        : {
+                            backgroundColor: "white",
+                            margin: "10px 0px 0px 0px",
+                            cursor: "pointer",
+                          }
+                    }
+                    className="notgeneral form-control col"
+                    onClick={() => {
+                      setSelectedOption("notgeneral");
+                    }}
+                   >
+                    <input
+                      type="radio"
+                      id="notgeneral"
+                      value="notgeneral"
+                      style={{
+                        display: "none",
+                      }}
+                      checked={selectedOption === "notgeneral"}
+                      onChange={handleOptionChange}
+                    />
+                    <label htmlFor="notgeneral">Manual</label>
+                  </div>
+                </div>
+              {selectedOption === "notgeneral" ? (
+                <>
+                  <div className="mb-3 row">
+                    <label className="col-sm-3 form-label" htmlFor="selectYear">Select Year :</label>
+                    <select
+                      id="selectYear"
+                      name="selectYear"
+                      value={selectedYear}
+                      onChange={handleYearChange}
+                      className="col form-select"
+                    >
+                      {[...Array(2025 - 1970).keys()].map((year) => (
+                        <option key={year} value={1970 + year}>
+                          {1970 + year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mb-3 row">
+                    <label className="form-label col-sm-3">Company Type :</label>
+                    <input
+                      type="radio"
+                      id="llp"
+                      name="companyType"
+                      value="LLP"
+                      checked={companyType === "LLP"}
+                      onChange={handleCompanyTypeChange}
+                      className="form-check-input"
+                    />
+                    <label htmlFor="llp" className="col">
+                      LLP
+                    </label>
+                    <input
+                      type="radio"
+                      id="pvtLtd"
+                      name="companyType"
+                      value="PVT LTD"
+                      checked={companyType === "PVT LTD"}
+                      onChange={handleCompanyTypeChange}
+                      className="form-check-input"
+                    />
+                    <label className="col" htmlFor="pvtLtd">PVT LTD</label>
+                  </div>
+                </>
+              ) : (
+                <div></div>
+              )}
+
+              <div className="mb-3 row">
+                <label className="col-sm-3 form-label" htmlFor="numberOfData">Number of Data :</label>
+                <input
+                  type="number"
+                  id="numberOfData"
+                  name="numberOfData"
+                  className="form-control col"
+                  value={numberOfData}
+                  onChange={handleNumberOfDataChange}
+                  min="1"
+                  required
+                  
+                />
+              </div>
+              <div class="card-footer text-end">
+              <button
+                type="submit"
+                className="btn btn-primary"
+              >
+                Submit
+              </button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Main Page Starts from here */}
+      
     </div>
   );
 }

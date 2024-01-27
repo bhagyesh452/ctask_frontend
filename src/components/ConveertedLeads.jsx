@@ -7,10 +7,12 @@ import axios from "axios";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import Swal from "sweetalert2";
 import { IconButton } from "@mui/material";
-
+import "./styles/main.css";
 import CloseIcon from "@mui/icons-material/Close";
+import Form from "./Form";
 
 function ConveertedLeads() {
+  const [formOpen, setformOpen] = useState(true);
   const [data, setData] = useState([]);
   const [unames, setUnames] = useState([]);
   const [paymentCount, setpaymentCount] = useState(0);
@@ -77,49 +79,101 @@ function ConveertedLeads() {
 
   const handleSubmitForm = async () => {
     const formData = new FormData();
-   formData.append("bdmName", leadData.bdmName);
-formData.append("bdmEmail", leadData.bdmEmail);
-formData.append("bdmType", leadData.bdmType);
-formData.append("supportedBy", leadData.supportedBy);
-formData.append("bookingDate", leadData.bookingDate);
-formData.append("caCase", leadData.caCase);
-formData.append("caNumber", leadData.caNumber);
-formData.append("caEmail", leadData.caEmail);
-formData.append("caCommission", leadData.caCommission);
-formData.append("companyName", leadData.companyName);
-formData.append("contactNumber", leadData.contactNumber);
-formData.append("companyEmail", leadData.companyEmail);
-formData.append("services", leadData.services);
-formData.append("originalTotalPayment", leadData.originalTotalPayment);
-formData.append("totalPayment", leadData.totalPayment);
-formData.append("paymentTerms", leadData.paymentTerms);
-formData.append("paymentMethod", leadData.paymentMethod);
-formData.append("firstPayment", (leadData.firstPayment * leadData.totalPayment) /
-100);
-formData.append("secondPayment", (leadData.secondPayment * leadData.totalPayment) /
-100);
-formData.append("thirdPayment", (leadData.thirdPayment * leadData.totalPayment) /
-100);
-formData.append("fourthPayment", (leadData.fourthPayment * leadData.totalPayment) /
-100);
-formData.append("bookingSource", leadData.bookingSource);
-formData.append("cPANorGSTnum", leadData.cPANorGSTnum);
-formData.append("incoDate", leadData.incoDate);
-formData.append("extraNotes", leadData.extraNotes);
+    if (leadData.bdmName === "other") {
+      formData.append("bdmName", otherName);
+    } else {
+      formData.append("bdmName", leadData.bdmName);
+    }
+
+    formData.append("bdmEmail", leadData.bdmEmail);
+    formData.append("bdmType", leadData.bdmType);
+    formData.append("supportedBy", leadData.supportedBy);
+    formData.append("bookingDate", leadData.bookingDate);
+    formData.append("caCase", leadData.caCase);
+    formData.append("caNumber", leadData.caNumber);
+    formData.append("caEmail", leadData.caEmail);
+    formData.append("caCommission", leadData.caCommission);
+    formData.append("companyName", leadData.companyName);
+    formData.append("contactNumber", leadData.contactNumber);
+    formData.append("companyEmail", leadData.companyEmail);
+    formData.append("services", leadData.services);
+    formData.append("originalTotalPayment", leadData.originalTotalPayment);
+    formData.append("totalPayment", leadData.totalPayment);
+    formData.append("paymentTerms", leadData.paymentTerms);
+    formData.append("paymentMethod", leadData.paymentMethod);
+    formData.append(
+      "firstPayment",
+      (leadData.firstPayment * leadData.totalPayment) / 100
+    );
+    formData.append(
+      "secondPayment",
+      (leadData.secondPayment * leadData.totalPayment) / 100
+    );
+    formData.append(
+      "thirdPayment",
+      (leadData.thirdPayment * leadData.totalPayment) / 100
+    );
+    formData.append(
+      "fourthPayment",
+      (leadData.fourthPayment * leadData.totalPayment) / 100
+    );
+    formData.append("bookingSource", leadData.bookingSource);
+    formData.append("cPANorGSTnum", leadData.cPANorGSTnum);
+    formData.append("incoDate", leadData.incoDate);
+    formData.append("extraNotes", leadData.extraNotes);
     if (leadData.otherDocs) {
       for (let i = 0; i < leadData.otherDocs.length; i++) {
         formData.append("otherDocs", leadData.otherDocs[i]);
       }
     }
-    formData.append('paymentReceipt', leadData.paymentReciept);
-    
+    formData.append("paymentReceipt", leadData.paymentReciept);
 
     try {
+      if (
+        leadData.firstPayment +
+          leadData.secondPayment +
+          leadData.thirdPayment +
+          leadData.fourthPayment !==
+        100
+      ) {
+        Swal.fire("Incorrect Payment");
+
+        return true;
+      }
       const response = await axios.post(
         "http://localhost:3001/lead-form",
         formData
       );
-
+      setLeadData({
+        // Initialize properties with default values if needed
+        bdmName: "",
+        bdmEmail: "",
+        bdmType: "Close by",
+        supportedBy: false,
+        bookingDate: null,
+        caCase: "No",
+        caNumber: 0,
+        caEmail: "",
+        caCommission: "",
+        companyName: "",
+        contactNumber: 0,
+        companyEmail: "",
+        services: "",
+        originalTotalPayment: 0,
+        totalPayment: 0,
+        paymentTerms: "Full Advanced",
+        paymentMethod: "",
+        firstPayment: 0,
+        secondPayment: 0,
+        thirdPayment: 0,
+        fourthPayment: 0,
+        paymentReciept: null,
+        bookingSource: "",
+        cPANorGSTnum: 0,
+        incoDate: null,
+        extraNotes: "",
+        otherDocs: null,
+      });
       closepopup();
       Swal.fire("Data sent Succefully!");
     } catch (error) {
@@ -130,11 +184,22 @@ formData.append("extraNotes", leadData.extraNotes);
     }
   };
 
+  const handleRemoveFile = (index) => {
+    setLeadData((prevLeadData) => {
+      const updatedDocs = [...prevLeadData.otherDocs];
+      updatedDocs.splice(index, 1);
+      return {
+        ...prevLeadData,
+        otherDocs: updatedDocs,
+      };
+    });
+  };
+
   return (
     <div>
       {/* Dialog box Content */}
 
-      <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
+      <Dialog open={false} onClose={closepopup} fullWidth maxWidth="lg">
         <div class="col-md-12">
           <div class="card">
             <div class="card-header d-flex justify-content-between">
@@ -162,7 +227,7 @@ formData.append("extraNotes", leadData.extraNotes);
                         }}
                       >
                         <option value="" disabled selected>
-                          Please select BDE Name
+                          Please select BDM Name
                         </option>
                         {unames &&
                           unames.map((names) => (
@@ -179,13 +244,11 @@ formData.append("extraNotes", leadData.extraNotes);
                         type="text"
                         name="othername"
                         id="othername"
-                        placeholder="Enter BDE Name"
+                        placeholder="Enter BDM Name"
                         className="form-control"
+                        value={otherName}
                         onChange={(e) => {
-                          setLeadData((prevLeadData) => ({
-                            ...prevLeadData,
-                            bdmName: e.target.value,
-                          }));
+                          setotherName(e.target.value);
                         }}
                       />
                     </div>
@@ -193,10 +256,10 @@ formData.append("extraNotes", leadData.extraNotes);
 
                   <div className="email col">
                     <input
-                      type="text"
+                      type="email"
                       name="othername"
                       id="othername"
-                      placeholder="Enter BDE Email Address"
+                      placeholder="Enter BDM Email Address"
                       className="form-control"
                       value={leadData.bdmEmail}
                       onChange={(e) => {
@@ -205,6 +268,7 @@ formData.append("extraNotes", leadData.extraNotes);
                           bdmEmail: e.target.value,
                         }));
                       }}
+                      required
                     />
                   </div>
                 </div>
@@ -244,21 +308,31 @@ formData.append("extraNotes", leadData.extraNotes);
                   </div>
                 </div>
               </div>
-
-              <div className="booking-date mb-3">
-                <label className="form-label">Booking Date</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      bookingDate: e.target.value,
-                    }));
-                  }}
-                />
+              <div className="row">
+                <div className="col-sm-12">
+                  <div className="row">
+                    <div className="col-sm-4">
+                      <div className="booking-date mb-3">
+                        <div className="bookingDateinside">
+                          <label className="form-label">Booking Date</label>
+                          <input
+                            type="date"
+                            className="form-control"
+                            onChange={(e) => {
+                              setLeadData((prevLeadData) => ({
+                                ...prevLeadData,
+                                bookingDate: e.target.value,
+                              }));
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div className="CA-case">
+
+              <div className="CA-case mb-3">
                 <label class="form-label">CA Case</label>
                 <div className="check-ca-case">
                   <div class="mb-3">
@@ -299,8 +373,8 @@ formData.append("extraNotes", leadData.extraNotes);
                   </div>
                 </div>
                 {leadData.caCase === "Yes" && (
-                  <div className="ca-details d-flex">
-                    <div className="ca-number">
+                  <div className="ca-details row">
+                    <div className="ca-number col">
                       <input
                         type="number"
                         name="ca-number"
@@ -315,7 +389,7 @@ formData.append("extraNotes", leadData.extraNotes);
                         }}
                       />
                     </div>
-                    <div className="ca-email">
+                    <div className="ca-email col">
                       <div className="ca-email2">
                         <input
                           type="text"
@@ -333,7 +407,7 @@ formData.append("extraNotes", leadData.extraNotes);
                       </div>
                     </div>
 
-                    <div className="ca-commision">
+                    <div className="ca-commision col">
                       <input
                         type="text"
                         name="ca-commision"
@@ -351,54 +425,57 @@ formData.append("extraNotes", leadData.extraNotes);
                   </div>
                 )}
               </div>
-              <div className="company-name mb-3">
-                <label class="form-label">Enter Company's Name</label>
-                <input
-                  type="text"
-                  name="company-name"
-                  id="company-name"
-                  placeholder="Enter Company Name"
-                  className="form-control"
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      companyName: e.target.value, // Set the value based on the selected radio button
-                    }));
-                  }}
-                />
+              <div className="companyDetails row mb-3">
+                <div className="company-name col">
+                  <label class="form-label">Enter Company's Name</label>
+                  <input
+                    type="text"
+                    name="company-name"
+                    id="company-name"
+                    placeholder="Enter Company Name"
+                    className="form-control"
+                    onChange={(e) => {
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        companyName: e.target.value, // Set the value based on the selected radio button
+                      }));
+                    }}
+                  />
+                </div>
+                <div className="company-contact col">
+                  <label class="form-label">Enter Contact Number</label>
+                  <input
+                    type="number"
+                    name="company-contact"
+                    id="company-contact"
+                    placeholder="Enter Contact Number"
+                    className="form-control"
+                    onChange={(e) => {
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        contactNumber: e.target.value, // Set the value based on the selected radio button
+                      }));
+                    }}
+                  />
+                </div>
+                <div className="company-email col">
+                  <label class="form-label">Enter Company's Email-ID</label>
+                  <input
+                    type="text"
+                    name="company-email"
+                    id="company-email"
+                    placeholder="Enter Company Email ID"
+                    className="form-control"
+                    onChange={(e) => {
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        companyEmail: e.target.value, // Set the value based on the selected radio button
+                      }));
+                    }}
+                  />
+                </div>
               </div>
-              <div className="company-contact mb-3">
-                <label class="form-label">Enter Contact Number</label>
-                <input
-                  type="number"
-                  name="company-contact"
-                  id="company-contact"
-                  placeholder="Enter Contact Number"
-                  className="form-control"
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      contactNumber: e.target.value, // Set the value based on the selected radio button
-                    }));
-                  }}
-                />
-              </div>
-              <div className="company-email mb-3">
-                <label class="form-label">Enter Company's Email-ID</label>
-                <input
-                  type="text"
-                  name="company-email"
-                  id="company-email"
-                  placeholder="Enter Company Email ID"
-                  className="form-control"
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      companyEmail: e.target.value, // Set the value based on the selected radio button
-                    }));
-                  }}
-                />
-              </div>
+
               <div className="services mb-3">
                 <label class="form-label">Services</label>
                 <input
@@ -458,7 +535,7 @@ formData.append("extraNotes", leadData.extraNotes);
                   </label>
                 </div>
               </div>
-              <div className="payment-withGST">
+              <div className="payment-withGST mb-3">
                 <label class="form-label">
                   Total Payment&nbsp;
                   <span style={{ fontWeight: "bold" }}>INC. GST</span>
@@ -467,8 +544,8 @@ formData.append("extraNotes", leadData.extraNotes);
               </div>
               <div className="payment-terms">
                 <label className="form-label">Payment Terms</label>
-                <div className="mb-3">
-                  <div className="row">
+                <div className="mb-3 row">
+                  <div className="full-time col">
                     <label className="form-check form-check-inline col">
                       <input
                         className="form-check-input"
@@ -480,7 +557,11 @@ formData.append("extraNotes", leadData.extraNotes);
                           setpaymentCount(1);
                           setLeadData((prevLeadData) => ({
                             ...prevLeadData,
-                            paymentTerms: e.target.value, // Set the value based on the selected radio button
+                            paymentTerms: e.target.value,
+                            firstPayment: 100,
+                            secondPayment: 0,
+                            thirdPayment: 0,
+                            fourthPayment: 0,
                           }));
                         }}
                       />
@@ -499,7 +580,7 @@ formData.append("extraNotes", leadData.extraNotes);
                           setLeadData((prevLeadData) => ({
                             ...prevLeadData,
                             paymentTerms: e.target.value,
-                            secondPayment: 50,
+
                             // Set the value based on the selected radio button
                           }));
                         }}
@@ -510,184 +591,224 @@ formData.append("extraNotes", leadData.extraNotes);
                 </div>
                 {leadData.paymentTerms === "two-part" && (
                   <>
-                    <div className="row more-payments">
+                    <div className="row more-payments mb-3">
                       <div className="col first-payment">
-                        <input
-                          type="number"
-                          name="first-payment"
-                          id="first-payment"
-                          value={leadData.firstPayment}
-                          placeholder="First Payment"
-                          className="form-control"
-                          onChange={(e) => {
-                            setLeadData((prevLeadData) => ({
-                              ...prevLeadData,
-                              firstPayment: e.target.value
-                                .replace(/\D/g, "")
-                                .slice(0, 2),
-                            }));
-                          }}
-                        />
-                      </div>
-                      {paymentCount === 2 && (
-                        <div className="col second-payment d-flex">
+                        <label class="form-label">First Payment</label>
+                        <div className="f-pay d-flex">
                           <input
                             type="number"
-                            name="second-payment"
-                            id="second-payment"
-                            value={leadData.secondPayment}
-                            placeholder="Second Payment"
+                            style={{
+                              borderRadius: "5px 0px 0px 5px",
+                            }}
+                            name="first-payment"
+                            id="first-payment"
+                            value={leadData.firstPayment}
+                            placeholder="First Payment"
                             className="form-control"
                             onChange={(e) => {
                               setLeadData((prevLeadData) => ({
                                 ...prevLeadData,
-                                secondPayment: e.target.value, // Set the value based on the selected radio button
+                                firstPayment: e.target.value,
                               }));
                             }}
                           />
-                          <button
-                            onClick={() => {
-                              setpaymentCount(3);
-                              leadData.thirdPayment =
-                                100 -
-                                leadData.firstPayment -
-                                leadData.secondPayment;
-                            }}
-                            type="button"
-                            className="btn btn-primary"
-                          >
-                            <i className="fas fa-plus"></i> +{" "}
-                          </button>
+
+                          <span className="rupees-sym">₹</span>
                         </div>
+                      </div>
+                      {paymentCount === 2 && (
+                        <>
+                          <div className="col second-payment">
+                            <label class="form-label">Second Payment</label>
+                            <div className="d-flex">
+                              <input
+                                type="number"
+                                style={{
+                                  borderRadius: "5px 0px 0px 5px",
+                                }}
+                                name="second-payment"
+                                id="second-payment"
+                                value={leadData.secondPayment}
+                                placeholder="Second Payment"
+                                className="form-control"
+                                onChange={(e) => {
+                                  setLeadData((prevLeadData) => ({
+                                    ...prevLeadData,
+                                    secondPayment: e.target.value, // Set the value based on the input
+                                  }));
+                                }}
+                                // Add style for extra space on the right
+                              />
+                              <span className="rupees-sym">₹</span>
+
+                              {/* Add a span with Indian Rupees symbol */}
+
+                              <button
+                                onClick={() => {
+                                  setpaymentCount(3);
+                                }}
+                                type="button"
+                                style={{ marginLeft: "5px" }}
+                                className="btn btn-primary"
+                              >
+                                <i className="fas fa-plus"></i> +{" "}
+                              </button>
+                            </div>
+                          </div>
+                        </>
                       )}
                       {paymentCount === 3 && (
                         <>
                           <div className="col second-payment">
-                            <input
-                              type="number"
-                              name="second-payment"
-                              id="second-payment"
-                              value={leadData.secondPayment}
-                              placeholder="Second Payment"
-                              className="form-control"
-                              onChange={(e) => {
-                                setLeadData((prevLeadData) => ({
-                                  ...prevLeadData,
-                                  secondPayment: e.target.value
-                                    .replace(/\D/g, "")
-                                    .slice(0, 2),
-                                }));
-                              }}
-                            />
+                            <label class="form-label">Second Payment</label>
+                            <div className="d-flex">
+                              <input
+                                style={{
+                                  borderRadius: "5px 0px 0px 5px",
+                                }}
+                                type="number"
+                                name="second-payment"
+                                id="second-payment"
+                                value={leadData.secondPayment}
+                                placeholder="Second Payment"
+                                className="form-control"
+                                onChange={(e) => {
+                                  setLeadData((prevLeadData) => ({
+                                    ...prevLeadData,
+                                    secondPayment: e.target.value,
+                                  }));
+                                }}
+                              />
+                              <span className="rupees-sym">₹</span>
+                            </div>
                           </div>
-                          <div className="col third-payment d-flex">
-                            <input
-                              type="number"
-                              name="third-payment"
-                              id="third-payment"
-                              value={leadData.thirdPayment}
-                              placeholder="Third Payment"
-                              className="form-control"
-                              onChange={(e) => {
-                                setLeadData((prevLeadData) => ({
-                                  ...prevLeadData,
-                                  thirdPayment: e.target.value,
-                                }));
-                              }}
-                            />
-                            <button
-                              onClick={() => {
-                                setpaymentCount(4);
-                                leadData.fourthPayment =
-                                  100 -
-                                  leadData.firstPayment -
-                                  leadData.secondPayment -
-                                  leadData.thirdPayment;
-                              }}
-                              type="button"
-                              className="btn btn-primary"
-                            >
-                              <i className="fas fa-plus"></i> +{" "}
-                            </button>
+                          <div className="col third-payment">
+                            <label class="form-label">Third Payment</label>
+                            <div className="d-flex">
+                              <input
+                                style={{
+                                  borderRadius: "5px 0px 0px 5px",
+                                }}
+                                type="number"
+                                name="third-payment"
+                                id="third-payment"
+                                value={leadData.thirdPayment}
+                                placeholder="Third Payment"
+                                className="form-control"
+                                onChange={(e) => {
+                                  setLeadData((prevLeadData) => ({
+                                    ...prevLeadData,
+                                    thirdPayment: e.target.value,
+                                  }));
+                                }}
+                              />
+                              <span className="rupees-sym">₹</span>
+                              <button
+                                style={{ marginLeft: "5px" }}
+                                onClick={() => {
+                                  setpaymentCount(4);
+                                }}
+                                type="button"
+                                className="btn btn-primary"
+                              >
+                                <i className="fas fa-plus"></i> +{" "}
+                              </button>
+                            </div>
                           </div>
                         </>
                       )}
                       {paymentCount === 4 && (
                         <>
                           <div className="col second-payment">
-                            <input
-                              type="number"
-                              name="second-payment"
-                              id="second-payment"
-                              value={leadData.secondPayment}
-                              placeholder="Second Payment"
-                              className="form-control"
-                              onChange={(e) => {
-                                setLeadData((prevLeadData) => ({
-                                  ...prevLeadData,
-                                  secondPayment: e.target.value
-                                    .replace(/\D/g, "")
-                                    .slice(0, 2),
-                                }));
-                              }}
-                            />
+                            <label class="form-label">Second Payment</label>
+                            <div className="d-flex">
+                              <input
+                                style={{
+                                  borderRadius: "5px 0px 0px 5px",
+                                }}
+                                type="number"
+                                name="second-payment"
+                                id="second-payment"
+                                value={leadData.secondPayment}
+                                placeholder="Second Payment"
+                                className="form-control"
+                                onChange={(e) => {
+                                  setLeadData((prevLeadData) => ({
+                                    ...prevLeadData,
+                                    secondPayment: e.target.value,
+                                  }));
+                                }}
+                              />
+                              <span className="rupees-sym">₹</span>
+                            </div>
                           </div>
                           <div className="col third-payment">
-                            <input
-                              type="number"
-                              name="third-payment"
-                              id="third-payment"
-                              value={leadData.thirdPayment}
-                              placeholder="Thrid Payment"
-                              className="form-control"
-                              onChange={(e) => {
-                                setLeadData((prevLeadData) => ({
-                                  ...prevLeadData,
-                                  thirdPayment: e.target.value
-                                    .replace(/\D/g, "")
-                                    .slice(0, 2),
-                                }));
-                              }}
-                            />
+                            <label class="form-label">Third Payment</label>
+                            <div className="d-flex">
+                              <input
+                                type="number"
+                                style={{
+                                  borderRadius: "5px 0px 0px 5px",
+                                }}
+                                name="third-payment"
+                                id="third-payment"
+                                value={leadData.thirdPayment}
+                                placeholder="Thrid Payment"
+                                className="form-control"
+                                onChange={(e) => {
+                                  setLeadData((prevLeadData) => ({
+                                    ...prevLeadData,
+                                    thirdPayment: e.target.value,
+                                  }));
+                                }}
+                              />
+                              <span className="rupees-sym">₹</span>
+                            </div>
                           </div>
-                          <div className="col fourth-payment d-flex">
-                            <input
-                              type="number"
-                              name="fourth-payment"
-                              id="fourth-payment"
-                              value={leadData.fourthPayment}
-                              placeholder="Fourth Payment"
-                              className="form-control"
-                              onChange={(e) => {
-                                setLeadData((prevLeadData) => ({
-                                  ...prevLeadData,
-                                  fourthPayment: e.target.value,
-                                }));
-                              }}
-                            />
-                            <button
-                              onClick={() => {
-                                setpaymentCount(3);
-                              }}
-                              type="button"
-                              className="btn btn-primary"
-                            >
-                              <i className="fas fa-plus"></i> -{" "}
-                            </button>
+                          <div className="col fourth-payment">
+                            <label class="form-label">Fourth Payment</label>
+                            <div className="d-flex">
+                              <input
+                                style={{
+                                  borderRadius: "5px 0px 0px 5px",
+                                }}
+                                type="number"
+                                name="fourth-payment"
+                                id="fourth-payment"
+                                value={leadData.fourthPayment}
+                                placeholder="Fourth Payment"
+                                className="form-control"
+                                onChange={(e) => {
+                                  setLeadData((prevLeadData) => ({
+                                    ...prevLeadData,
+                                    fourthPayment: e.target.value,
+                                  }));
+                                }}
+                              />
+                              <span className="rupees-sym">₹</span>
+                              <button
+                                style={{ marginLeft: "5px" }}
+                                onClick={() => {
+                                  setpaymentCount(3);
+                                }}
+                                type="button"
+                                className="btn btn-primary"
+                              >
+                                <i className="fas fa-plus"></i> -{" "}
+                              </button>
+                            </div>
                           </div>
                         </>
                       )}
                     </div>
                     <div className="details-payment row">
                       <div className="details-payment-1 col">
-                        <label class="form-label">First Payment</label>
                         <div className="form-control">
                           {(leadData.firstPayment * leadData.totalPayment) /
                             100}
                         </div>
                       </div>
                       <div className="details-payment-2 col">
-                        <label class="form-label">Second Payment</label>
                         <div className="form-control">
                           {(leadData.secondPayment * leadData.totalPayment) /
                             100}
@@ -695,7 +816,6 @@ formData.append("extraNotes", leadData.extraNotes);
                       </div>
                       {paymentCount >= 3 && (
                         <div className="details-payment-3 col">
-                          <label class="form-label">Third Payment</label>
                           <div className="form-control">
                             {(leadData.thirdPayment * leadData.totalPayment) /
                               100}
@@ -705,7 +825,6 @@ formData.append("extraNotes", leadData.extraNotes);
 
                       {paymentCount === 4 && (
                         <div className="details-payment-4 col">
-                          <label class="form-label">Fourth Payment</label>
                           <div className="form-control">
                             {(leadData.fourthPayment * leadData.totalPayment) /
                               100}
@@ -716,107 +835,126 @@ formData.append("extraNotes", leadData.extraNotes);
                   </>
                 )}
               </div>
-              <div className="payment-method mb-3">
-                <label className="form-label">Payment Method</label>
-                <select
-                  className="form-select mb-3"
-                  value={leadData.paymentMethod}
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      paymentMethod: e.target.value,
-                    }));
-                  }}
-                  id="select-emails"
-                >
-                  <option value="" disabled>
-                    Select Payment Option
-                  </option>
-                  <option value="ICICI Bank">ICICI Bank</option>
-                  <option value="SRK Seedfund(Non GST)/IDFC first Bank">
-                    SRK Seedfund(Non GST)/IDFC first Bank
-                  </option>
-                  <option value="STARTUP SAHAY SERVICES/ADVISORY(Non GST)/ IDFC First Bank">
-                    STARTUP SAHAY SERVICES/ADVISORY(Non GST)/ IDFC First Bank
-                  </option>
-                  <option value="Razorpay">Razorpay</option>
-                  <option value="PayU">PayU</option>
-                  <option value="Other">Other</option>
-                </select>
-                {leadData.paymentMethod === "Other" && (
-                  <input
-                    type="text"
-                    name="other-method"
-                    id="other-method"
-                    placeholder="Enter Payment Method "
-                    className="form-control "
-                  />
-                )}
-              </div>
 
-              <div className="payment-receipt">
-                <div class="mb-3">
-                  <label for="formFile" class="form-label">
-                    Payment Reciept
-                  </label>
-                  <input class="form-control" type="file" id="formFile"  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      paymentReciept: e.target.files[0],
-                    }));
-                  }} />
+              <div className="row">
+                <div className="col-sm-3">
+                  <div className="payment-method mb-3">
+                    <label className="form-label">Payment Method</label>
+                    <select
+                      className="form-select mb-3"
+                      value={leadData.paymentMethod}
+                      onChange={(e) => {
+                        setLeadData((prevLeadData) => ({
+                          ...prevLeadData,
+                          paymentMethod: e.target.value,
+                        }));
+                      }}
+                      id="select-emails"
+                    >
+                      <option value="" disabled>
+                        Select Payment Option
+                      </option>
+                      <option value="ICICI Bank">ICICI Bank</option>
+                      <option value="SRK Seedfund(Non GST)/IDFC first Bank">
+                        SRK Seedfund(Non GST)/IDFC first Bank
+                      </option>
+                      <option value="STARTUP SAHAY SERVICES/ADVISORY(Non GST)/ IDFC First Bank">
+                        STARTUP SAHAY SERVICES/ADVISORY(Non GST)/ IDFC First
+                        Bank
+                      </option>
+                      <option value="Razorpay">Razorpay</option>
+                      <option value="PayU">PayU</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {leadData.paymentMethod === "Other" && (
+                      <input
+                        type="text"
+                        name="other-method"
+                        id="other-method"
+                        placeholder="Enter Payment Method "
+                        className="form-control "
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="col-sm-3">
+                  <div className="payment-receipt">
+                    <div class="mb-3">
+                      <label for="formFile" class="form-label">
+                        Payment Reciept
+                      </label>
+                      <input
+                        class="form-control"
+                        type="file"
+                        id="formFile"
+                        onChange={(e) => {
+                          setLeadData((prevLeadData) => ({
+                            ...prevLeadData,
+                            paymentReciept: e.target.files[0],
+                          }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="col-sm-3">
+                  <div className="booking-source mb-3">
+                    <label class="form-label">Booking Source</label>
+                    <select
+                      type="text"
+                      class="form-select mb-3"
+                      id="select-emails"
+                      value={leadData.bookingSource}
+                      onChange={(e) => {
+                        setLeadData((prevLeadData) => ({
+                          ...prevLeadData,
+                          bookingSource: e.target.value,
+                        }));
+                      }}
+                    >
+                      <option value="" disabled>
+                        Select Booking Source
+                      </option>
+                      <option value="Excel Data">Excel Data</option>
+                      <option value="Insta Lead">Insta Lead</option>
+                      <option value="Reference">Reference</option>
+                      <option value="Existing Client">Existing Client</option>
+                      <option value="Lead By Saurav Sir">
+                        Lead By Saurav Sir
+                      </option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {leadData.bookingSource === "Other" && (
+                      <input
+                        type="text"
+                        name="other-method"
+                        id="other-method"
+                        placeholder="Enter Booking Source"
+                        className="form-control "
+                      />
+                    )}
+                  </div>
+                </div>
+                <div className="col-sm-3">
+                  <div className="cpan-or-gst mb-3">
+                    <label class="form-label">Company Pan or GST Number</label>
+                    <input
+                      type="number"
+                      name="panorGSTnumber"
+                      id="panorGSTnumber"
+                      placeholder="Enter Company's PAN/GST number "
+                      className="form-control"
+                      onChange={(e) => {
+                        setLeadData((prevLeadData) => ({
+                          ...prevLeadData,
+                          cPANorGSTnum: e.target.value,
+                        }));
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="booking-source mb-3">
-                <label class="form-label">Booking Source</label>
-                <select
-                  type="text"
-                  class="form-select mb-3"
-                  id="select-emails"
-                  value={leadData.bookingSource}
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      bookingSource: e.target.value,
-                    }));
-                  }}
-                >
-                  <option value="" disabled>
-                    Select Booking Source
-                  </option>
-                  <option value="Excel Data">Excel Data</option>
-                  <option value="Insta Lead">Insta Lead</option>
-                  <option value="Reference">Reference</option>
-                  <option value="Existing Client">Existing Client</option>
-                  <option value="Lead By Saurav Sir">Lead By Saurav Sir</option>
-                  <option value="Other">Other</option>
-                </select>
-                {leadData.bookingSource === "Other" && (
-                  <input
-                    type="text"
-                    name="other-method"
-                    id="other-method"
-                    placeholder="Enter Booking Source"
-                    className="form-control "
-                  />
-                )}
-              </div>
-              <div className="cpan-or-gst mb-3">
-                <label class="form-label">Company Pan or GST Number</label>
-                <input
-                  type="number"
-                  name="panorGSTnumber"
-                  id="panorGSTnumber"
-                  placeholder="Enter Company's PAN/GST number "
-                  className="form-control"
-                  onChange={(e) => {
-                    setLeadData((prevLeadData) => ({
-                      ...prevLeadData,
-                      cPANorGSTnum: e.target.value,
-                    }));
-                  }}
-                />
-              </div>
+
               <div className="cidate-or-extranotes row mb-3">
                 <div className="cidate col">
                   <label className="form-label">
@@ -865,7 +1003,7 @@ formData.append("extraNotes", leadData.extraNotes);
                       ],
                     }));
                   }}
-                  className="form-control"
+                  className="form-control mb-3"
                   type="file"
                   id="other-docs"
                   multiple
@@ -873,7 +1011,22 @@ formData.append("extraNotes", leadData.extraNotes);
                 {leadData.otherDocs && leadData.otherDocs.length > 0 && (
                   <ul>
                     {leadData.otherDocs.map((file, index) => (
-                      <li key={index}>{file.name}</li>
+                      <li key={index}>
+                        {file.name}
+                        <button
+                          style={{
+                            backgroundColor: "#ffb900",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "10px",
+                            padding: "0px 5px",
+                            marginLeft: "5px",
+                          }}
+                          onClick={() => handleRemoveFile(index)}
+                        >
+                          -
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -894,6 +1047,7 @@ formData.append("extraNotes", leadData.extraNotes);
 
       <Header name={data.ename} designation={data.designation} />
       <EmpNav userId={userId} />
+      
       <div className="page-wrapper">
         <div className="page-header d-print-none">
           <div
@@ -903,16 +1057,33 @@ formData.append("extraNotes", leadData.extraNotes);
             <div className="row g-2 align-items-center">
               <div className="col">
                 {/* <!-- Page pre-title --> */}
-                <h2 className="page-title">Converted leads</h2>
+                <h2 className="page-title">
+                  {formOpen === false ? "Converted leads" : "LeadForm"}
+                </h2>
               </div>
             </div>
             <div className="request">
-              <div className="btn-list">
+              {formOpen ? (
+                <>
+                <div className="btn-list">
+                <button 
+                 onClick={() => {
+                  setformOpen(false);
+                }}
+                className="btn btn-primary d-none d-sm-inline-block">
+                    Leads
+                </button>
+                </div>
+                </>
+              ): (
+                <div className="btn-list">
                 <button
-                  onClick={functionopenpopup}
+                  onClick={() => {
+                    setformOpen(true);
+                  }}
                   className="btn btn-primary d-none d-sm-inline-block"
                 >
-                  ADD person
+                  ADD Leads
                 </button>
                 <a
                   href="#"
@@ -924,7 +1095,19 @@ formData.append("extraNotes", leadData.extraNotes);
                   {/* <!-- Download SVG icon from http://tabler-icons.io/i/plus --> */}
                 </a>
               </div>
+              )}
+              
             </div>
+          </div>
+        </div>
+        <div
+          onCopy={(e) => {
+            e.preventDefault();
+          }}
+          className="page-body"
+        >
+          <div className="container-xl">
+            {formOpen && <Form/>}
           </div>
         </div>
       </div>
