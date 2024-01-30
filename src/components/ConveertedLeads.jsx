@@ -1104,10 +1104,10 @@ function ConveertedLeads() {
           onCopy={(e) => {
             e.preventDefault();
           }}
-          className="page-body"
+          className="page-body m-0"
         >
           <div className="container-xl">
-            {formOpen && <Form/>}
+            {formOpen && <Form employeeName={data.ename} employeeEmail={data.email}/>}
           </div>
         </div>
       </div>

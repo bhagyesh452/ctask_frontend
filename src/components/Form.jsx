@@ -7,7 +7,8 @@ import Swal from "sweetalert2";
 
 import "./styles/main.css";
 import Select from "react-select";
-
+import { IconX } from "@tabler/icons-react";
+import { parse } from "papaparse";
 const options = [
   {
     value: "Certification Services",
@@ -122,8 +123,11 @@ function Form({
   companysName,
   companysEmail,
   companysInco,
+  employeeName,
+  employeeEmail,
 }) {
   const [unames, setUnames] = useState([]);
+  const [checkStat, setCheckStat] = useState(false);
   const [paymentCount, setpaymentCount] = useState(0);
   const [otherName, setotherName] = useState("");
   const [leadData, setLeadData] = useState({
@@ -213,6 +217,8 @@ function Form({
     formData.append("caNumber", leadData.caNumber);
     formData.append("caEmail", leadData.caEmail);
     formData.append("caCommission", leadData.caCommission);
+    formData.append("empName", employeeName);
+    formData.append("empEmail", employeeEmail);
     {
       matured
         ? formData.append("companyName", companysName)
@@ -329,10 +335,18 @@ function Form({
       };
     });
   };
+  console.log(
+    parseInt(leadData.firstPayment) +
+      parseInt(leadData.secondPayment) +
+      parseInt(leadData.thirdPayment) +
+      parseInt(leadData.fourthPayment),
+    parseInt(leadData.totalPayment)
+  );
 
   return (
     <div>
-      <div class="card-body">
+      <div className="hr-1"></div>
+      <div class="card-body mt-3">
         <div className="BDM-section row">
           <div className="bdm-name col">
             <label class="form-label">
@@ -411,8 +425,8 @@ function Form({
             />
           </div>
 
-          <div className="closeby">
-            <div class="mb-3">
+          <div className="closeby mt-2">
+            <div class="mb-1">
               <div className="d-flex">
                 <label class="form-check form-check-inline">
                   <input
@@ -451,7 +465,7 @@ function Form({
           <div className="col-sm-12">
             <div className="row">
               <div className="col-sm-4">
-                <div className="booking-date mb-3">
+                <div className="booking-date mb-1">
                   <div className="bookingDateinside">
                     <label className="form-label">Booking Date</label>
                     <input
@@ -467,11 +481,14 @@ function Form({
                   </div>
                 </div>
               </div>
+              <div className="col-12 p-1">
+                <div className="hr-2"></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="CA-case mb-3">
+        <div className="CA-case mb-1">
           <label class="form-label">CA Case</label>
           <div className="check-ca-case">
             <div class="mb-3">
@@ -514,6 +531,7 @@ function Form({
           {leadData.caCase === "Yes" && (
             <div className="ca-details row">
               <div className="ca-number col">
+                <label className="form-label">Enter CA's Number</label>
                 <input
                   type="number"
                   name="ca-number"
@@ -529,6 +547,7 @@ function Form({
                 />
               </div>
               <div className="ca-email col">
+                <label className="form-label">Enter CA's Email</label>
                 <div className="ca-email2">
                   <input
                     type="text"
@@ -547,6 +566,7 @@ function Form({
               </div>
 
               <div className="ca-commision col">
+                <label className="form-label">Enter CA's Commission</label>
                 <input
                   type="text"
                   name="ca-commision"
@@ -565,6 +585,9 @@ function Form({
           )}
         </div>
         <div className="companyDetails row mb-3">
+          <div className="col-12">
+            <div className="hr-2"></div>
+          </div>
           <div className="company-name col">
             <label class="form-label">Enter Company's Name</label>
             <input
@@ -616,73 +639,100 @@ function Form({
             />
           </div>
         </div>
-
-        <div className="services mb-3">
-          <label class="form-label">Services</label>
-          <Select
-            styles={customStyles}
-            isMulti
-            options={options}
-            onChange={(selectedOptions) => {
-              setSelectedValues(selectedOptions.map((option) => option.value));
-            }}
-            value={selectedValues.map((value) => ({ value, label: value }))}
-            placeholder="Select Services..."
-          />
+        <div className="row align-items-center">
+          <div className="col-12">
+            <label class="form-label">Services</label>
+          </div>
+          <div className="col-sm-6">
+            <div className="services mb-3">
+              <Select
+                styles={customStyles}
+                isMulti
+                options={options}
+                onChange={(selectedOptions) => {
+                  setSelectedValues(
+                    selectedOptions.map((option) => option.value)
+                  );
+                }}
+                value={selectedValues.map((value) => ({ value, label: value }))}
+                placeholder="Select Services..."
+              />
+            </div>
+          </div>
+          <div className="col-sm-6">
+            <p className="p-0">
+              Total Selceted Services: {selectedValues.length}
+            </p>
+          </div>
         </div>
+
         <div className="paymentGST mb-3 row">
+          <div className="col-12">
+            <div className="hr-2"></div>
+          </div>
           <div className="original-payment col">
             <label class="form-label">Total Payment&nbsp;</label>
-            <div className="d-flex">
-              <input
-                style={{
-                  borderRadius: "5px 0px 0px 5px",
-                }}
-                type="number"
-                name="total-payment"
-                id="total-payment"
-                placeholder="Enter Total Payment with GST"
-                className="form-control"
-                onChange={(e) => {
-                  setLeadData((prevLeadData) => ({
-                    ...prevLeadData,
-                    originalTotalPayment: e.target.value,
-                    totalPayment: e.target.value, // Set the value based on the selected radio button
-                  }));
-                }}
-              />
-              <span className="rupees-sym">₹</span>
+            <div className="row align-items-center">
+              <div className="col-sm-7">
+                <div className="d-flex">
+                  <input
+                    style={{
+                      borderRadius: "5px 0px 0px 5px",
+                    }}
+                    type="number"
+                    name="total-payment"
+                    id="total-payment"
+                    placeholder="Enter Total Payment with GST"
+                    className="form-control"
+                    onChange={(e) => {
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        originalTotalPayment: e.target.value,
+                        totalPayment: checkStat
+                          ? e.target.value * 1.18
+                          : e.target.value,
+                      }));
+                    }}
+                  />
+                  <span className="rupees-sym">₹</span>
+                </div>
+              </div>
+              <div className="col-sm-5">
+                <div className="form-check col m-0">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    value={leadData.totalPayment}
+                    id="flexCheckChecked"
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setCheckStat(isChecked ? true : false);
+                      setLeadData((prevLeadData) => ({
+                        ...prevLeadData,
+                        originalTotalPayment: isChecked
+                          ? prevLeadData.totalPayment
+                          : prevLeadData.originalTotalPayment,
+                        totalPayment: isChecked
+                          ? prevLeadData.totalPayment * 1.18
+                          : prevLeadData.originalTotalPayment,
+                      }));
+                    }}
+                  />
+                  <label
+                    className="form-check-label"
+                    htmlFor="flexCheckChecked"
+                  >
+                    WITH GST (18%)
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="form-check col">
-            <label class="form-label">Include GST</label>
-            <input
-              className="form-check-input"
-              type="checkbox"
-              value=""
-              id="flexCheckChecked"
-              onChange={(e) => {
-                const isChecked = e.target.checked;
-                setLeadData((prevLeadData) => ({
-                  ...prevLeadData,
-                  originalTotalPayment: isChecked
-                    ? prevLeadData.totalPayment
-                    : prevLeadData.originalTotalPayment,
-                  totalPayment: isChecked
-                    ? prevLeadData.totalPayment * 1.18
-                    : prevLeadData.originalTotalPayment,
-                }));
-              }}
-            />
-            <label className="form-check-label" htmlFor="flexCheckChecked">
-              Include GST (18%)
-            </label>
-          </div>
           <div className="payment-withGST col">
             <label class="form-label">
               Total Payment&nbsp;
-              <span style={{ fontWeight: "bold" }}>INC. GST</span>
+              <span style={{ fontWeight: "bold" }}>WITH GST</span>
             </label>
             <div className="d-flex">
               <div
@@ -690,8 +740,9 @@ function Form({
                   borderRadius: "5px 0px 0px 5px",
                 }}
                 className="form-control"
+                
               >
-                {leadData.totalPayment}
+                {leadData.totalPayment ? leadData.totalPayment : 0}
               </div>
               <span className="rupees-sym">₹</span>
             </div>
@@ -736,8 +787,8 @@ function Form({
                     setLeadData((prevLeadData) => ({
                       ...prevLeadData,
                       paymentTerms: e.target.value,
-                      firstPayment: leadData.totalPayment / 2,
-                      secondPayment: leadData.totalPayment / 2,
+                      firstPayment: 0,
+                      secondPayment: 0,
 
                       // Set the value based on the selected radio button
                     }));
@@ -767,6 +818,7 @@ function Form({
                         setLeadData((prevLeadData) => ({
                           ...prevLeadData,
                           firstPayment: e.target.value,
+                          secondPayment: leadData.totalPayment - e.target.value,
                         }));
                       }}
                     />
@@ -781,14 +833,18 @@ function Form({
                       <div className="d-flex">
                         <input
                           type="number"
-                          style={{
-                            borderRadius: "5px 0px 0px 5px",
-                          }}
+                          style={{ borderRadius: "5px 0px 0px 5px" }}
                           name="second-payment"
                           id="second-payment"
                           value={leadData.secondPayment}
                           placeholder="Second Payment"
-                          className="form-control"
+                          className={
+                            parseInt(leadData.firstPayment) +
+                              parseInt(leadData.secondPayment) !==
+                            parseInt(leadData.totalPayment)
+                              ? "form-control error-border"
+                              : "form-control"
+                          }
                           onChange={(e) => {
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
@@ -804,6 +860,12 @@ function Form({
                         <button
                           onClick={() => {
                             setpaymentCount(3);
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              firstPayment: 0, 
+                              secondPayment: 0, 
+                              thirdPayment: 0, 
+                            }))
                           }}
                           type="button"
                           style={{ marginLeft: "5px" }}
@@ -834,6 +896,7 @@ function Form({
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
                               secondPayment: e.target.value,
+                              thirdPayment:parseInt(leadData.totalPayment) - parseInt(leadData.firstPayment) - parseInt(e.target.value)
                             }));
                           }}
                         />
@@ -852,7 +915,13 @@ function Form({
                           id="third-payment"
                           value={leadData.thirdPayment}
                           placeholder="Third Payment"
-                          className="form-control"
+                          className={
+                            parseInt(leadData.firstPayment) +
+                              parseInt(leadData.secondPayment) + parseInt(leadData.thirdPayment) !==
+                            parseInt(leadData.totalPayment)
+                              ? "form-control error-border"
+                              : "form-control"
+                          }
                           onChange={(e) => {
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
@@ -868,6 +937,8 @@ function Form({
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
                               thirdPayment: 0,
+                              firstPayment:0,
+                              secondPaymen:0
                             }));
                           }}
                           type="button"
@@ -879,6 +950,13 @@ function Form({
                           style={{ marginLeft: "5px" }}
                           onClick={() => {
                             setpaymentCount(4);
+                            setLeadData((prevLeadData) => ({
+                              ...prevLeadData,
+                              thirdPayment: 0,
+                              firstPayment:0,
+                              secondPayment:0,
+                              fourthPayment:0
+                            }));
                           }}
                           type="button"
                           className="btn btn-primary"
@@ -931,6 +1009,7 @@ function Form({
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
                               thirdPayment: e.target.value,
+                              fourthPayment:parseInt(leadData.totalPayment) - parseInt(leadData.firstPayment) - parseInt(leadData.secondPayment) -  parseInt(e.target.value)
                             }));
                           }}
                         />
@@ -949,7 +1028,13 @@ function Form({
                           id="fourth-payment"
                           value={leadData.fourthPayment}
                           placeholder="Fourth Payment"
-                          className="form-control"
+                          className={
+                            parseInt(leadData.firstPayment) +
+                              parseInt(leadData.secondPayment) + parseInt(leadData.thirdPayment) + parseInt(leadData.fourthPayment) !==
+                            parseInt(leadData.totalPayment)
+                              ? "form-control error-border"
+                              : "form-control"
+                          }
                           onChange={(e) => {
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
@@ -980,21 +1065,43 @@ function Form({
               <div className="details-payment row mb-3">
                 <div className="details-payment-1 col">
                   <small class="form-hint">
-                    {(leadData.firstPayment * 100) / leadData.totalPayment} %
-                    Amount
+                    {parseInt(leadData.firstPayment) +
+                      parseInt(leadData.secondPayment) +
+                      parseInt(leadData.thirdPayment) +
+                      parseInt(leadData.fourthPayment) !==
+                    parseInt(leadData.totalPayment)
+                      ? "Wrong Payment"
+                      : `${
+                          (leadData.firstPayment * 100) / leadData.totalPayment
+                        } % Amount`}
                   </small>
                 </div>
                 <div className="details-payment-2 col">
                   <small class="form-hint">
-                    {(leadData.secondPayment * 100) / leadData.totalPayment} %
-                    Amount
+                    {parseInt(leadData.firstPayment) +
+                      parseInt(leadData.secondPayment) +
+                      parseInt(leadData.thirdPayment) +
+                      parseInt(leadData.fourthPayment) !==
+                    parseInt(leadData.totalPayment)
+                      ? "Wrong Payment"
+                      : `${
+                          (leadData.secondPayment * 100) / leadData.totalPayment
+                        } % Amount`}
                   </small>
                 </div>
                 {paymentCount >= 3 && (
                   <div className="details-payment-3 col">
                     <small class="form-hint">
-                      {(leadData.thirdPayment * 100) / leadData.totalPayment} %
-                      Amount
+                      {parseInt(leadData.firstPayment) +
+                        parseInt(leadData.secondPayment) +
+                        parseInt(leadData.thirdPayment) +
+                        parseInt(leadData.fourthPayment) !==
+                      parseInt(leadData.totalPayment)
+                        ? "Wrong Payment"
+                        : `${
+                            (leadData.thirdPayment * 100) /
+                            leadData.totalPayment
+                          } % Amount`}
                     </small>
                   </div>
                 )}
@@ -1002,14 +1109,25 @@ function Form({
                 {paymentCount === 4 && (
                   <div className="details-payment-4 col">
                     <small class="form-hint">
-                      {(leadData.fourthPayment * 100) / leadData.totalPayment} %
-                      Amount
+                      {parseInt(leadData.firstPayment) +
+                        parseInt(leadData.secondPayment) +
+                        parseInt(leadData.thirdPayment) +
+                        parseInt(leadData.fourthPayment) !==
+                      parseInt(leadData.totalPayment)
+                        ? "Wrong Payment"
+                        : `${
+                            (leadData.fourthPayment * 100) /
+                            leadData.totalPayment
+                          } % Amount`}
                     </small>
                   </div>
                 )}
               </div>
             </>
           )}
+          <div className="col-12">
+            <div className="hr-2"></div>
+          </div>
         </div>
 
         <div className="row">
@@ -1164,26 +1282,22 @@ function Form({
               multiple
             />
             {leadData.otherDocs && leadData.otherDocs.length > 0 && (
-              <ul>
+              <div className="uploaded-filename-main d-flex flex-wrap">
                 {leadData.otherDocs.map((file, index) => (
-                  <li key={index}>
-                    {file.name}
+                  <div
+                    className="uploaded-fileItem d-flex align-items-center"
+                    key={index}
+                  >
+                    <p className="m-0">{file.name}</p>
                     <button
-                      style={{
-                        backgroundColor: "#ffb900",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "10px",
-                        padding: "0px 5px",
-                        marginLeft: "5px",
-                      }}
+                      className="fileItem-dlt-btn"
                       onClick={() => handleRemoveFile(index)}
                     >
-                      -
+                      <IconX className="close-icon" />
                     </button>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
           <div className="extra-notes col">
@@ -1192,7 +1306,7 @@ function Form({
               type="text"
               name="extraNotes"
               id="extraNotes"
-              placeholder="Enter Company's PAN/GST number "
+              placeholder="Enter any extra notes "
               className="form-control"
               onChange={(e) => {
                 setLeadData((prevLeadData) => ({
@@ -1208,7 +1322,7 @@ function Form({
         <button
           onClick={handleSubmitForm}
           type="submit"
-          class="btn btn-primary"
+          class="btn btn-primary mb-3"
         >
           Submit
         </button>
