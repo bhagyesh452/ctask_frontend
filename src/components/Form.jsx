@@ -259,10 +259,10 @@ function Form({
     try {
       if (
         paymentCount > 1 &&
-        leadData.firstPayment +
-          leadData.secondPayment +
-          leadData.thirdPayment +
-          leadData.fourthPayment !==
+        parseInt(leadData.firstPayment) +
+          parseInt(leadData.secondPayment) +
+          parseInt(leadData.thirdPayment) +
+          parseInt(leadData.fourthPayment) !==
           parseInt(leadData.totalPayment)
       ) {
         Swal.fire("Incorrect Payment");
@@ -324,6 +324,8 @@ function Form({
     const formattedDate = `${year}-${month}-${day}`;
     return formattedDate;
   };
+
+
 
   const handleRemoveFile = (index) => {
     setLeadData((prevLeadData) => {
@@ -738,8 +740,13 @@ function Form({
               <div
                 style={{
                   borderRadius: "5px 0px 0px 5px",
+                 
                 }}
-                className="form-control"
+                className={parseInt(leadData.firstPayment) +
+                  parseInt(leadData.secondPayment) +
+                  parseInt(leadData.thirdPayment) +
+                  parseInt(leadData.fourthPayment) !==
+                parseInt(leadData.totalPayment) ? "form-control error-border" : "form-control"}
                 
               >
                 {leadData.totalPayment ? leadData.totalPayment : 0}
@@ -818,7 +825,7 @@ function Form({
                         setLeadData((prevLeadData) => ({
                           ...prevLeadData,
                           firstPayment: e.target.value,
-                          secondPayment: leadData.totalPayment - e.target.value,
+                          secondPayment: paymentCount === 2 && leadData.totalPayment - e.target.value 
                         }));
                       }}
                     />
@@ -851,6 +858,7 @@ function Form({
                               secondPayment: e.target.value, // Set the value based on the input
                             }));
                           }}
+                          readOnly={paymentCount === 2}
                           // Add style for extra space on the right
                         />
                         <span className="rupees-sym">₹</span>
@@ -928,6 +936,7 @@ function Form({
                               thirdPayment: e.target.value,
                             }));
                           }}
+                          readOnly={paymentCount === 3}
                         />
                         <span className="rupees-sym">₹</span>
                         <button
@@ -938,7 +947,7 @@ function Form({
                               ...prevLeadData,
                               thirdPayment: 0,
                               firstPayment:0,
-                              secondPaymen:0
+                              secondPayment:0
                             }));
                           }}
                           type="button"
@@ -1041,6 +1050,7 @@ function Form({
                               fourthPayment: e.target.value,
                             }));
                           }}
+                          readOnly={paymentCount === 4}
                         />
                         <span className="rupees-sym">₹</span>
                         <button
@@ -1050,6 +1060,9 @@ function Form({
                             setLeadData((prevLeadData) => ({
                               ...prevLeadData,
                               fourthPayment: 0,
+                              firstPayment:0,
+                              secondPayment:0,
+                              thirdPayment:0
                             }));
                           }}
                           type="button"
@@ -1072,7 +1085,7 @@ function Form({
                     parseInt(leadData.totalPayment)
                       ? "Wrong Payment"
                       : `${
-                          (leadData.firstPayment * 100) / leadData.totalPayment
+                          ((leadData.firstPayment * 100) / leadData.totalPayment).toFixed(2)
                         } % Amount`}
                   </small>
                 </div>
@@ -1085,7 +1098,7 @@ function Form({
                     parseInt(leadData.totalPayment)
                       ? "Wrong Payment"
                       : `${
-                          (leadData.secondPayment * 100) / leadData.totalPayment
+                          ((leadData.secondPayment * 100) / leadData.totalPayment).toFixed(2)
                         } % Amount`}
                   </small>
                 </div>
@@ -1099,8 +1112,8 @@ function Form({
                       parseInt(leadData.totalPayment)
                         ? "Wrong Payment"
                         : `${
-                            (leadData.thirdPayment * 100) /
-                            leadData.totalPayment
+                            ((leadData.thirdPayment * 100) /
+                            leadData.totalPayment).toFixed(2)
                           } % Amount`}
                     </small>
                   </div>
@@ -1116,8 +1129,8 @@ function Form({
                       parseInt(leadData.totalPayment)
                         ? "Wrong Payment"
                         : `${
-                            (leadData.fourthPayment * 100) /
-                            leadData.totalPayment
+                            ((leadData.fourthPayment * 100) /
+                            leadData.totalPayment).toFixed(2)
                           } % Amount`}
                     </small>
                   </div>

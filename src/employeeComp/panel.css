@@ -28,6 +28,12 @@ td textarea {
     /* padding: 0 !important; */
     border: none !important;
 }
+.save:disabled,
+.save[disabled]{
+  border: 1px solid #999999;
+  background-color: #cccccc;
+  color: #666666;
+}
 
 @media only screen and (max-width: 600px) {
     /* Adjust styles for smaller screens */

@@ -10,7 +10,7 @@ import "./panel.css";
 import { Link } from "react-router-dom";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import Swal from "sweetalert2";
-
+import SaveIcon from "@mui/icons-material/Save";
 import CloseIcon from "@mui/icons-material/Close";
 import Form from "../components/Form.jsx";
 
@@ -351,14 +351,22 @@ function EmployeePanel() {
   const handleNumberOfDataChange = (event) => {
     setNumberOfData(event.target.value);
   };
-
+  function formatDateproper(inputDate) {
+    const options = { month: "long", day: "numeric", year: "numeric" };
+    const formattedDate = new Date(inputDate).toLocaleDateString(
+      "en-US",
+      options
+    );
+    return formattedDate;
+  }
   const handleSubmit = async (event) => {
     const name = data.ename;
     const dateObject = new Date();
-    const hours = dateObject.getHours().toString().padStart(2, '0');
-    const minutes = dateObject.getMinutes().toString().padStart(2, '0');
+    const hours = dateObject.getHours().toString().padStart(2, "0");
+    const minutes = dateObject.getMinutes().toString().padStart(2, "0");
     const cTime = `${hours}:${minutes}`;
-    console.log(cTime);
+
+    const cDate = formatDateproper(dateObject);
     event.preventDefault();
     if (selectedOption === "notgeneral") {
       try {
@@ -370,7 +378,8 @@ function EmployeePanel() {
             companyType,
             numberOfData,
             name,
-            cTime
+            cTime,
+            cDate,
           }
         );
 
@@ -389,7 +398,8 @@ function EmployeePanel() {
           {
             numberOfData,
             name,
-            cTime
+            cTime,
+            cDate,
           }
         );
 
@@ -701,11 +711,13 @@ function EmployeePanel() {
                           );
                         }}
                         className={
-                          dataStatus === "All" ? "nav-link active item-act" : "nav-link"
+                          dataStatus === "All"
+                            ? "nav-link active item-act"
+                            : "nav-link"
                         }
                         data-bs-toggle="tab"
                       >
-                        General
+                        General : {dataStatus==="All" && employeeData.length}
                       </a>
                     </li>
 
@@ -727,7 +739,7 @@ function EmployeePanel() {
                         }
                         data-bs-toggle="tab"
                       >
-                        Interested
+                        Interested : {dataStatus==="Interested" && employeeData.length}
                       </a>
                     </li>
                     <li class="nav-item">
@@ -748,7 +760,7 @@ function EmployeePanel() {
                         }
                         data-bs-toggle="tab"
                       >
-                        Matured
+                        Matured : {dataStatus==="Matured" && employeeData.length}
                       </a>
                     </li>
                     <li class="nav-item">
@@ -771,7 +783,7 @@ function EmployeePanel() {
                         }
                         data-bs-toggle="tab"
                       >
-                        Not-Interested
+                        Not-Interested : {dataStatus==="NotInterested" && employeeData.length}
                       </a>
                     </li>
                   </ul>
@@ -814,7 +826,7 @@ function EmployeePanel() {
                             <th>State</th>
                             <th>Status</th>
                             <th>Remarks</th>
-                            <th>Action</th>
+                            {dataStatus === "Matured" && <th>Action</th>}
                           </tr>
                         </thead>
                         {currentData.length === 0 ? (
@@ -907,64 +919,58 @@ function EmployeePanel() {
                                 </td>
 
                                 <td>
-                                  <textarea
-                                    defaultValue={company["Remarks"]}
-                                    onChange={(e) =>
-                                      handlenewFieldChange(
-                                        company._id,
-                                        "Remarks",
-                                        e.target.value
-                                      )
-                                    }
-                                    type="text"
+                                  <div
                                     style={{
-                                      padding: ".4375rem .75rem",
-                                      border:
-                                        " var(--tblr-border-width) solid var(--tblr-border-color)",
-                                      borderRadius: "var(--tblr-border-radius)",
-                                      boxShadow: "0 0 transparent",
-                                      transition:
-                                        "border-color .15s ease-in-out,box-shadow .15s ease-in-out",
-                                      height: "34px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
                                     }}
-                                  />
-                                </td>
-                                <td>
-                                  {company["Status"] === "Matured" ? (
-                                    <button
-                                      
+                                  >
+                                    <textarea
+                                      defaultValue={company["Remarks"]}
+                                      onChange={(e) =>
+                                        handlenewFieldChange(
+                                          company._id,
+                                          "Remarks",
+                                          e.target.value
+                                        )
+                                      }
+                                      type="text"
                                       style={{
-                                        padding: "5px",
-                                        fontSize: "12px",
-                                        backgroundColor: "lightblue",
-                                        // Additional styles for the "View" button
+                                        padding: ".4375rem .75rem",
+                                        border:
+                                          " var(--tblr-border-width) solid var(--tblr-border-color)",
+                                        borderRadius:
+                                          "var(--tblr-border-radius)",
+                                        boxShadow: "0 0 transparent",
+                                        transition:
+                                          "border-color .15s ease-in-out,box-shadow .15s ease-in-out",
+                                        height: "34px",
                                       }}
-                                      className="btn btn-primary d-none d-sm-inline-block"
-                                    >
-                                      View
-                                    </button>
-                                  ) : (
-                                    <button
+                                    />
+                                    <IconButton
                                       onClick={() => handleUpdate(company._id)}
                                       disabled={
                                         !isUpdateButtonEnabled(company._id)
                                       }
-                                      style={{
-                                        padding: "5px",
-                                        fontSize: "12px",
-                                        backgroundColor: "#ffb900",
-                                        ":hover": {
-                                          backgroundColor:
-                                            "lightgreen !important",
-                                        },
-                                        // Additional styles for the "Update" button
-                                      }}
-                                      className="btn btn-primary d-none d-sm-inline-block"
                                     >
-                                      Update
-                                    </button>
-                                  )}
+                                      <SaveIcon className="save" style={{ color: "#ffb900" }} />
+                                    </IconButton>
+                                  </div>
                                 </td>
+                                {dataStatus==="Matured" && <td>
+                                  <button
+                                    style={{
+                                      padding: "5px",
+                                      fontSize: "12px",
+                                      backgroundColor: "lightblue",
+                                      // Additional styles for the "View" button
+                                    }}
+                                    className="btn btn-primary d-none d-sm-inline-block"
+                                  >
+                                    View
+                                  </button>
+                                </td>}
                               </tr>
                             ))}
                           </tbody>
@@ -1079,8 +1085,6 @@ function EmployeePanel() {
         </>
       )}
 
-
-
       {/* Request Data popup */}
       <Dialog open={open} onClose={closepopup} fullWidth maxWidth="sm">
         <DialogTitle>
@@ -1123,7 +1127,7 @@ function EmployeePanel() {
                     checked={selectedOption === "general"}
                     onChange={handleOptionChange}
                   />
-                  <label htmlFor="general">General Data</label>
+                  <label htmlFor="general">General Data </label>
                 </div>
                 <div
                   style={

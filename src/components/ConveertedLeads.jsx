@@ -12,7 +12,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import Form from "./Form";
 
 function ConveertedLeads() {
-  const [formOpen, setformOpen] = useState(true);
+  const [formOpen, setformOpen] = useState(false);
   const [data, setData] = useState([]);
   const [unames, setUnames] = useState([]);
   const [paymentCount, setpaymentCount] = useState(0);
